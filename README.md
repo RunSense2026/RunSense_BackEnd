@@ -21,6 +21,15 @@
 
 * Lombok: 보일러플레이트 코드(Getter/Setter, Constructor 등) 제거 및 생산성 향상
 
+* springdoc-openapi-starter-webmvc-ui: Swagger UI와 OpenAPI 문서 자동 생성 및 화면 제공
+
+---
+## 2-1. Swagger 확인 방법
+
+애플리케이션을 실행한 뒤 브라우저에서 `http://localhost:8080/v3/api-docs` 로 접속하면 OpenAPI JSON 문서를 확인할 수 있습니다.
+
+Swagger UI 화면은 `http://localhost:8080/swagger-ui.html` 에서 확인할 수 있습니다.
+
 ---
 ## 3. 폴더 구조
 ```text
@@ -34,7 +43,7 @@ src/
       │    │   ├── dto/          
       │    │   ├── entity/          
       │    ├─ global/                   # 전역에서 사용하는 기능 구현(설정, 예외 처리, 공통 응답 등)         
-      │    │   └── dto/                    
+      │    │   └── config/                    
       └── resources/                    
            └── application.yml         
            
@@ -88,4 +97,4 @@ src/
 
 ---
 
-_최종 수정일: 2026-05-22_
+_최종 수정일: 2026-05-24_
