@@ -39,14 +39,6 @@ public class UserService {
 		return userRepository.existsByEmail(email);
 	}
 
-	public boolean isEmailDuplicated(String email) {
-		if (email == null || email.isBlank()) {
-			throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
-		}
-
-		return userRepository.existsByEmail(email);
-	}
-
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto requestDto) {
 		// 중복 이메일 여부 확인
@@ -113,5 +105,52 @@ public class UserService {
 				.orElseThrow(() -> new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 		refreshToken.clear();
 		refreshTokenRepository.save(refreshToken);
+	}
+
+	@Transactional
+	public AuthTokenResponseDto login(UserLoginRequestDto requestDto) {
+		User user = userRepository.findByEmail(requestDto.getEmail())
+				.orElseThrow(() -> new CustomException(ErrorCode.INVALID_LOGIN_INFO));
+
+		if (!passwordEncoder.matches(requestDto.getLoginPw(), user.getLoginPw())) {
+			throw new CustomException(ErrorCode.INVALID_LOGIN_INFO);
+		}
+
+		String accessToken = jwtTokenProvider.createAccessToken(user);
+		String refreshToken = jwtTokenProvider.createRefreshToken(user);
+
+		// Refresh Token은 서버에서도 저장해야 함 (만료 확인, 토큰 회전 추적, 강제 로그아웃 등에 사용)
+		refreshTokenRepository.save(RefreshToken.create(user, refreshToken, jwtTokenProvider.getRefreshTokenExpiresAt()));
+
+		return AuthTokenResponseDto.of(accessToken, refreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
+	}
+
+	@Transactional
+	public AuthTokenResponseDto reissue(String refreshTokenValue) {
+		RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
+				.orElseThrow(() -> new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
+
+		// Refresh Token의 만료 여부 확인 (DB에 저장된 expiresAt 기반)
+		if (refreshToken.isExpired()) {
+			throw new CustomException(ErrorCode.EXPIRED_TOKEN);
+		}
+
+		// Refresh Token의 폐기(revoke) 여부 확인 (강제 로그아웃 등으로 폐기된 경우)
+		if (refreshToken.isRevoked()) {
+			throw new CustomException(ErrorCode.INVALID_TOKEN);
+		}
+
+		// JWT 서명과 클레임 검증 (토큰 타입, 만료시간 등)
+		jwtTokenProvider.validateRefreshToken(refreshTokenValue);
+
+		User user = refreshToken.getUser();
+		String newAccessToken = jwtTokenProvider.createAccessToken(user);
+		String newRefreshToken = jwtTokenProvider.createRefreshToken(user);
+
+		// 토큰 회전(rotation): 기존 토큰을 새 토큰으로 교체 (보안 강화)
+		refreshToken.rotate(newRefreshToken, jwtTokenProvider.getRefreshTokenExpiresAt());
+		refreshTokenRepository.save(refreshToken);
+
+		return AuthTokenResponseDto.of(newAccessToken, newRefreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
 	}
 }
