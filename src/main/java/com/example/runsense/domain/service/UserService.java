@@ -22,6 +22,14 @@ public class UserService {
 		this.passwordEncoder = passwordEncoder;
 	}
 
+	public boolean isEmailDuplicated(String email) {
+		if (email == null || email.isBlank()) {
+			throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+		}
+
+		return userRepository.existsByEmail(email);
+	}
+
 	@Transactional
 	public UserResponseDto signUp(UserSignUpRequestDto requestDto) {
 		// 중복 이메일 여부 확인
