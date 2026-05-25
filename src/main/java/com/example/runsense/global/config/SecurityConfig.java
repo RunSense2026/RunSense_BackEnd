@@ -19,12 +19,13 @@ public class SecurityConfig {
 		return http
 				.csrf(csrf -> csrf.ignoringRequestMatchers(
 						"/api/users/signup",
+						"/api/users/email-duplicate",
 						"/v3/api-docs/**",
 						"/swagger-ui/**",
 						"/swagger-ui.html"))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/api/users/signup").permitAll()
+						.requestMatchers("/api/users/signup", "/api/users/email-duplicate").permitAll()
 						.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 						.anyRequest().authenticated())
 				.httpBasic(Customizer.withDefaults())
