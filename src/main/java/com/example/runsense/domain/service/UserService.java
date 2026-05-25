@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.runsense.domain.dto.UserSignUpRequestDto;
 import com.example.runsense.domain.dto.UserSignUpResponseDto;
+import com.example.runsense.domain.dto.UserResponseDto;
 import com.example.runsense.domain.entity.User;
 import com.example.runsense.domain.repository.UserRepository;
 
