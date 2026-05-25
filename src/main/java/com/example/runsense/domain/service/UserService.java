@@ -39,6 +39,14 @@ public class UserService {
 		return userRepository.existsByEmail(email);
 	}
 
+	public boolean isEmailDuplicated(String email) {
+		if (email == null || email.isBlank()) {
+			throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+		}
+
+		return userRepository.existsByEmail(email);
+	}
+
 	@Transactional
 	public UserSignUpResponseDto signUp(UserSignUpRequestDto requestDto) {
 		// 중복 이메일 여부 확인
