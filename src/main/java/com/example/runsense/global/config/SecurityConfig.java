@@ -1,19 +1,30 @@
 package com.example.runsense.global.config;
 
+import com.example.runsense.global.exception.CustomException;
+import com.example.runsense.global.exception.ErrorCode;
+import com.example.runsense.global.response.ApiResponse;
 import com.example.runsense.global.security.JwtAuthenticationFilter;
 import com.example.runsense.global.security.JwtTokenProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.io.IOException;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	private final JwtTokenProvider jwtTokenProvider;
 
@@ -39,6 +50,10 @@ public class SecurityConfig {
 				.httpBasic(httpBasic -> httpBasic.disable())
 				// CSRF 도반 비활성화 (Stateless 기반 API는 CSRF 위험 낮음)
 				.csrf(csrf -> csrf.disable())
+				// 인증/인가 실패를 공통 JSON 응답으로 처리
+				.exceptionHandling(exception -> exception
+						.authenticationEntryPoint(authenticationEntryPoint())
+						.accessDeniedHandler(accessDeniedHandler()))
 				// 세션 비생성 모드 (JWT는 stateless이므로 세션 저장 안 함)
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
@@ -54,5 +69,27 @@ public class SecurityConfig {
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
+	}
+
+	// 토큰 검증 실패 시 응답 처리 (401)
+	@Bean
+	public AuthenticationEntryPoint authenticationEntryPoint() {
+		return (request, response, authException) -> writeErrorResponse(response, ErrorCode.ACCESS_DENIED);
+	}
+
+	// 권한 부족 시 응답 처리 (403)
+	@Bean
+	public AccessDeniedHandler accessDeniedHandler() {
+		return (request, response, accessDeniedException) -> writeErrorResponse(response, ErrorCode.ACCESS_DENIED);
+	}
+
+	// 에러 응답 작성 메서드 (401, 403 공통)
+	private void writeErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
+		CustomException exception = new CustomException(errorCode);
+		response.setStatus(exception.getErrorCode().getStatus().value());
+		response.setContentType("application/json;charset=UTF-8");
+		response.getWriter().write(objectMapper.writeValueAsString(ApiResponse.fail(
+				exception.getErrorCode().getStatus().value(),
+				exception.getErrorCode().getMessage())));
 	}
 }
