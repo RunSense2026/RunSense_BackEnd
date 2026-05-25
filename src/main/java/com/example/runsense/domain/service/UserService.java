@@ -101,4 +101,17 @@ public class UserService {
 
 		return AuthTokenResponseDto.of(newAccessToken, newRefreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
 	}
+
+	@Transactional
+	public void logout(String refreshTokenValue) {
+		RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
+				.orElseThrow(() -> new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
+
+		if (refreshToken.isRevoked()) {
+			throw new CustomException(ErrorCode.INVALID_TOKEN);
+		}
+
+		refreshToken.revoke();
+		refreshTokenRepository.save(refreshToken);
+	}
 }
