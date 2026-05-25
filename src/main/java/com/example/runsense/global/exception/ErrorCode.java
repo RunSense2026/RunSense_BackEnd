@@ -17,6 +17,9 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "재발급 토큰을 찾을 수 없습니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
 
+    // 러닝 액티비티 조회
+    RUNNING_ACTIVITY_NOT_FOUND(HttpStatus.NOT_FOUND, "러닝 액티비티를 찾을 수 없습니다."),
+
     // 유효성 검증 실패
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다.");
 

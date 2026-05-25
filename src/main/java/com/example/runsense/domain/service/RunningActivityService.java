@@ -2,6 +2,10 @@ package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
+import com.example.runsense.domain.dto.running_activity.detail.AiCoachingReadResponseDto;
+import com.example.runsense.domain.dto.running_activity.detail.FootSensorDataReadResponseDto;
+import com.example.runsense.domain.dto.running_activity.detail.LapSplitReadResponseDto;
+import com.example.runsense.domain.dto.running_activity.detail.RunningActivityDetailResponseDto;
 import com.example.runsense.domain.dto.running_activity.sub.AiCoachingCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.sub.FootSensorDataCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.sub.LapSplitCreateRequestDto;
@@ -84,6 +88,34 @@ public class RunningActivityService {
 				.lapSplitCount(lapSplits.size())
 				.footSensorDataCount(footSensorDataList.size())
 				.aiCoachingCount(aiCoachings.size())
+				.build();
+	}
+
+	@Transactional(readOnly = true)
+	public RunningActivityDetailResponseDto read(Long activityId) {
+		RunningActivity runningActivity = runningActivityRepository.findById(activityId)
+				.orElseThrow(() -> new CustomException(ErrorCode.RUNNING_ACTIVITY_NOT_FOUND));
+
+		List<LapSplitReadResponseDto> lapSplits = lapSplitRepository.findAllByRunningActivityActivityIdOrderBySplitIdAsc(activityId)
+				.stream()
+				.map(LapSplitReadResponseDto::from)
+				.toList();
+
+		List<FootSensorDataReadResponseDto> footSensorData = footSensorDataRepository.findAllByRunningActivityActivityIdOrderBySensorDataIdAsc(activityId)
+				.stream()
+				.map(FootSensorDataReadResponseDto::from)
+				.toList();
+
+		List<AiCoachingReadResponseDto> aiCoachings = aiCoachingRepository.findAllByRunningActivityActivityIdOrderByCoachingIdAsc(activityId)
+				.stream()
+				.map(AiCoachingReadResponseDto::from)
+				.toList();
+
+		return RunningActivityDetailResponseDto.builder()
+				.activityId(runningActivity.getActivityId())
+				.lapSplits(lapSplits)
+				.footSensorData(footSensorData)
+				.aiCoachings(aiCoachings)
 				.build();
 	}
 
