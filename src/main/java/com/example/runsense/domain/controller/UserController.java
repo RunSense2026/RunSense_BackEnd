@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.runsense.domain.dto.EmailDuplicateCheckResponseDto;
 import com.example.runsense.domain.dto.AuthTokenResponseDto;
+import com.example.runsense.domain.dto.TokenLogoutRequestDto;
 import com.example.runsense.domain.dto.TokenReissueRequestDto;
 import com.example.runsense.domain.dto.UserLoginRequestDto;
 import com.example.runsense.domain.dto.UserResponseDto;
@@ -72,5 +73,16 @@ public class UserController {
 	public ApiResponse<AuthTokenResponseDto> reissue(@Valid @RequestBody TokenReissueRequestDto requestDto) {
 		AuthTokenResponseDto responseDto = userService.reissue(requestDto.getRefreshToken());
 		return ApiResponse.success(responseDto);
+	}
+
+	/**
+	 * 로그아웃 API
+	 * @param requestDto 로그아웃할 refreshToken이 들어있는 DTO
+	 * @return 로그아웃 성공 응답
+	 */
+	@PostMapping("/logout")
+	public ApiResponse<Void> logout(@Valid @RequestBody TokenLogoutRequestDto requestDto) {
+		userService.logout(requestDto.getRefreshToken());
+		return ApiResponse.success(null);
 	}
 }
