@@ -130,9 +130,13 @@ public class JwtTokenProvider {
 
 		// 토큰에서 subject(이메일) 추출
 		String email = claims.getSubject();
-		// JwtAuthenticationFilter에서 Authentication 객체를 SecurityContext에 저장
-		// 이후 @AuthenticationPrincipal로 접근 시 email 값이 principal로 사용됨
-		return new UsernamePasswordAuthenticationToken(email, null, AuthorityUtils.NO_AUTHORITIES);
+		// 토큰에서 userId 추출 (Number로 받아 Long으로 변환)
+		Number userIdNumber = claims.get(USER_ID, Number.class);
+		Long userId = userIdNumber != null ? userIdNumber.longValue() : null;
+
+		// principal로 UserPrincipal 객체를 저장하여 이후 DB 조회를 피함
+		UserPrincipal principal = new UserPrincipal(userId, email);
+		return new UsernamePasswordAuthenticationToken(principal, null, AuthorityUtils.NO_AUTHORITIES);
 	}
 
 	/**
