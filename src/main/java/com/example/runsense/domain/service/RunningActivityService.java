@@ -1,6 +1,8 @@
 package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityListItemResponseDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
 import com.example.runsense.domain.dto.running_activity.detail.AiCoachingReadResponseDto;
 import com.example.runsense.domain.dto.running_activity.detail.FootSensorDataReadResponseDto;
@@ -24,6 +26,8 @@ import com.example.runsense.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @Service
@@ -89,6 +93,39 @@ public class RunningActivityService {
 				.footSensorDataCount(footSensorDataList.size())
 				.aiCoachingCount(aiCoachings.size())
 				.build();
+	}
+
+	    @Transactional(readOnly = true)
+	    public RunningActivityListResponseDto listByUser(Long userId, Pageable pageable) {
+		Page<RunningActivity> activities = runningActivityRepository.findAllByUserUserIdOrderByActivityDateDesc(userId, pageable);
+
+		List<RunningActivityListItemResponseDto> content = activities.getContent().stream()
+			.map(activity -> RunningActivityListItemResponseDto.builder()
+				.activityId(activity.getActivityId())
+				.userId(activity.getUser().getUserId())
+				.distance(activity.getDistance())
+				.time(activity.getTime())
+				.pace(activity.getPace())
+				.activityDate(activity.getActivityDate())
+				.formScore(activity.getFormScore())
+				.build())
+			.toList();
+
+		return RunningActivityListResponseDto.builder()
+			.activities(content)
+			.page(activities.getNumber())
+			.size(activities.getSize())
+			.totalElements(activities.getTotalElements())
+			.totalPages(activities.getTotalPages())
+			.hasNext(activities.hasNext())
+			.build();
+	    }
+
+	@Transactional(readOnly = true)
+	public RunningActivityListResponseDto listForEmail(String email, Pageable pageable) {
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
+		return listByUser(user.getUserId(), pageable);
 	}
 
 	@Transactional(readOnly = true)
