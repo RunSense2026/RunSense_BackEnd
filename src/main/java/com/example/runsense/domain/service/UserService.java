@@ -6,8 +6,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.runsense.domain.dto.UserResponseDto;
 import com.example.runsense.domain.dto.UserSignUpRequestDto;
+import com.example.runsense.domain.dto.UserSignUpResponseDto;
 import com.example.runsense.domain.entity.User;
 import com.example.runsense.domain.repository.UserRepository;
 
@@ -31,7 +31,7 @@ public class UserService {
 	}
 
 	@Transactional
-	public UserResponseDto signUp(UserSignUpRequestDto requestDto) {
+	public UserSignUpResponseDto signUp(UserSignUpRequestDto requestDto) {
 		// 중복 이메일 여부 확인
 		if (userRepository.existsByEmail(requestDto.getEmail())) { // 사용자가 입력한 이메일이 이미 저장되어 있다면
 			throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
@@ -43,6 +43,6 @@ public class UserService {
 		User user = requestDto.toEntity(encodedPassword); // Builder로 DTO -> 엔티티 변환
 		User savedUser = userRepository.save(user); // DB에 저장
 
-		return UserResponseDto.from(savedUser); // 엔티티 -> DTO로 재변환해서 리턴
+		return UserSignUpResponseDto.from(savedUser); // 엔티티 -> DTO로 재변환해서 리턴
 	}
 }
