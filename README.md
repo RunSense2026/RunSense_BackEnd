@@ -31,6 +31,16 @@
 Swagger UI 화면은 `http://localhost:8080/swagger-ui.html` 에서 확인할 수 있습니다.
 
 ---
+
+## 2-2. JWT 로그인 방식
+
+* 로그인 성공 시 쿠키 대신 JSON body로 `accessToken`, `refreshToken`, `tokenType`, `expiresIn`을 내려줍니다.
+* `expiresIn`은 access token의 남은 유효시간을 초 단위로 의미합니다.
+* `reissue`는 refresh token으로 새 토큰을 다시 받는 재발급 API입니다.
+* 앱에서는 받은 토큰을 보안 저장소에 저장하고, 이후 요청마다 `Authorization: Bearer {accessToken}` 형식으로 전달합니다.
+
+
+---
 ## 3. 폴더 구조
 ```text
 src/

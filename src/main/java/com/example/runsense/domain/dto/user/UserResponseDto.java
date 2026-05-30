@@ -1,4 +1,4 @@
-package com.example.runsense.domain.dto;
+package com.example.runsense.domain.dto.user;
 
 import com.example.runsense.domain.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;

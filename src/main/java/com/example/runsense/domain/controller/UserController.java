@@ -1,5 +1,6 @@
 package com.example.runsense.domain.controller;
 
+import com.example.runsense.domain.dto.user.*;
 import com.example.runsense.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,9 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.runsense.domain.dto.EmailDuplicateCheckResponseDto;
-import com.example.runsense.domain.dto.UserSignUpResponseDto;
-import com.example.runsense.domain.dto.UserSignUpRequestDto;
 import com.example.runsense.domain.service.UserService;
 
 @RestController
@@ -50,5 +48,40 @@ public class UserController {
 		boolean isDuplicated = userService.isEmailDuplicated(email);
 		return ApiResponse.success(new EmailDuplicateCheckResponseDto(isDuplicated));
 	}
-}
 
+	/**
+	 * 로그인 API
+	 * @param requestDto 이메일과 비밀번호가 들어있는 DTO
+	 * @return 로그인 성공시 accessToken, refreshToken과 만료시간이 담긴 응답
+	 */
+	@Operation(summary = "유저 로그인", description = "이메일과 비밀번호로 로그인합니다")
+	@PostMapping("/login")
+	public ApiResponse<AuthTokenResponseDto> login(@Valid @RequestBody UserLoginRequestDto requestDto) {
+		AuthTokenResponseDto responseDto = userService.login(requestDto);
+		return ApiResponse.success(responseDto);
+	}
+
+	/**
+	 * 토큰 재발급 API
+	 * @param requestDto refreshToken이 들어있는 DTO
+	 * @return 새로운 accessToken, refreshToken과 만료시간이 담긴 응답
+	 */
+	@Operation(summary = "토큰 재발급", description = "refreshToken으로 accessToken과 refreshToken을 다시 발급합니다")
+	@PostMapping("/reissue")
+	public ApiResponse<AuthTokenResponseDto> reissue(@Valid @RequestBody TokenReissueRequestDto requestDto) {
+		AuthTokenResponseDto responseDto = userService.reissue(requestDto.getRefreshToken());
+		return ApiResponse.success(responseDto);
+	}
+
+	/**
+	 * 로그아웃 API
+	 * @param requestDto 로그아웃할 refreshToken이 들어있는 DTO
+	 * @return 로그아웃 성공 응답
+	 */
+	@Operation(summary = "유저 로그아웃", description = "refreshToken을 무효화하고 로그아웃합니다")
+	@PostMapping("/logout")
+	public ApiResponse<Void> logout(@Valid @RequestBody TokenLogoutRequestDto requestDto) {
+		userService.logout(requestDto.getRefreshToken());
+		return ApiResponse.success(null);
+	}
+}
