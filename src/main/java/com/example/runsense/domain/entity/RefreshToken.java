@@ -28,45 +28,34 @@ public class RefreshToken {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
+	@JoinColumn(name = "user_id", nullable = false, unique = true)
 	private User user;
 
-	@Column(nullable = false, unique = true, length = 1000)
-	private String token;
+	@Column(name = "refresh_token", unique = true, length = 1000)
+	private String refreshToken;
 
-	@Column(name = "expires_at", nullable = false)
+	@Column(name = "expires_at")
 	private LocalDateTime expiresAt;
-
-	@Column(name = "created_at", nullable = false)
-	private LocalDateTime createdAt;
-
-	@Column(name = "revoked_at")
-	private LocalDateTime revokedAt;
 
 	public static RefreshToken create(User user, String token, LocalDateTime expiresAt) {
 		return RefreshToken.builder()
 				.user(user)
-				.token(token)
+				.refreshToken(token)
 				.expiresAt(expiresAt)
-				.createdAt(LocalDateTime.now())
 				.build();
 	}
 
-	public void rotate(String token, LocalDateTime expiresAt) {
-		this.token = token;
+	public void issue(String token, LocalDateTime expiresAt) {
+		this.refreshToken = token;
 		this.expiresAt = expiresAt;
-		this.revokedAt = null;
 	}
 
-	public void revoke() {
-		this.revokedAt = LocalDateTime.now();
+	public void clear() {
+		this.refreshToken = null;
+		this.expiresAt = null;
 	}
 
 	public boolean isExpired() {
-		return expiresAt.isBefore(LocalDateTime.now());
-	}
-
-	public boolean isRevoked() {
-		return revokedAt != null;
+		return expiresAt == null || expiresAt.isBefore(LocalDateTime.now());
 	}
 }
