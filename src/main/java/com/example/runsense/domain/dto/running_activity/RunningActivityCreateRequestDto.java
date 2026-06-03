@@ -18,10 +18,6 @@ import java.util.List;
 @Schema(description = "러닝 액티비티 저장 요청 DTO")
 public class RunningActivityCreateRequestDto {
 
-    @Schema(description = "유저 고유 아이디")
-    @NotNull(message = "userId는 필수 입력 값입니다.")
-    private Long userId;
-
     @Schema(description = "총 거리", example = "5.00")
     @NotNull(message = "distance는 필수 입력 값입니다.")
     private Double distance;

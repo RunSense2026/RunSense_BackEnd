@@ -44,8 +44,8 @@ public class RunningActivityService {
     }
 
     @Transactional
-    public RunningActivityResponseDto create(RunningActivityCreateRequestDto requestDto) {
-        User user = userRepository.findById(requestDto.getUserId())
+    public RunningActivityResponseDto create(RunningActivityCreateRequestDto requestDto, Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
 
         RunningActivity runningActivity = RunningActivity.builder()

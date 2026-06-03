@@ -6,6 +6,7 @@ import com.example.runsense.domain.service.RunningActivityService;
 import com.example.runsense.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +24,7 @@ public class RunningActivityController {
 
     @Operation(summary = "러닝 기록 생성", description = "러닝 기록, 구간 기록, 발 센서 데이터, AI 코칭 정보를 함께 저장합니다")
     @PostMapping
-    public ApiResponse<RunningActivityResponseDto> create(@Valid @RequestBody RunningActivityCreateRequestDto requestDto) {
-        return ApiResponse.success(runningActivityService.create(requestDto));
+    public ApiResponse<RunningActivityResponseDto> create(@Valid @RequestBody RunningActivityCreateRequestDto requestDto, @AuthenticationPrincipal(expression = "userId") Long userId) {
+        return ApiResponse.success(runningActivityService.create(requestDto, userId));
     }
 }
