@@ -2,6 +2,7 @@ package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityDetailResponseDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
 import com.example.runsense.domain.dto.running_activity.sub.*;
 import com.example.runsense.domain.entity.AiCoaching;
@@ -122,14 +123,39 @@ public class RunningActivityService {
     }
 
     @Transactional(readOnly = true)
-    public List<RunningActivityResponseDto> readAll(Long currentUserId) {
+    public RunningActivityListResponseDto readAll(Long currentUserId) { // 1. 반환 타입 변경
+        // 유저 존재 여부 검증
         userRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
 
-        return runningActivityRepository.findAllByUserUserIdOrderByActivityDateDesc(currentUserId)
+        // 유저의 전체 러닝 기록 조회 및 DTO 변환
+        List<RunningActivityResponseDto> activities = runningActivityRepository.findAllByUserUserIdOrderByActivityDateDesc(currentUserId)
                 .stream()
                 .map(this::toRunningActivityResponseDto)
                 .toList();
+
+        // 통계 데이터 계산
+        int totalCount = activities.size(); // 횟수
+
+        double totalDistance = activities.stream() // 총 거리
+                .mapToDouble(RunningActivityResponseDto::getDistance)
+                .sum();
+
+        double averageFormScore = activities.stream() // 평균 폼 점수
+                .mapToDouble(RunningActivityResponseDto::getFormScore)
+                .average()
+                .orElse(0.0); // 기록이 없을 경우 0.0 처리
+
+        // 소수점 첫째짜리까지 보이도록
+        totalDistance = Math.round(totalDistance * 10) / 10.0;
+        averageFormScore = Math.round(averageFormScore * 10) / 10.0;
+
+        return RunningActivityListResponseDto.builder()
+                .totalCount(totalCount)
+                .totalDistance(totalDistance)
+                .averageFormScore(averageFormScore)
+                .activities(activities)
+                .build();
     }
 
     private RunningActivityResponseDto toRunningActivityResponseDto(RunningActivity runningActivity) {

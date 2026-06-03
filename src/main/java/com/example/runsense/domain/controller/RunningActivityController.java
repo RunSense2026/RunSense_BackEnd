@@ -2,6 +2,7 @@ package com.example.runsense.domain.controller;
 
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityDetailResponseDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
 import com.example.runsense.domain.service.RunningActivityService;
 import com.example.runsense.global.response.ApiResponse;
@@ -34,9 +35,9 @@ public class RunningActivityController {
         return ApiResponse.success(runningActivityService.read(activityId, userId));
     }
 
-    @Operation(summary = "러닝 기록 리스트 조회", description = "모든 기간의 러닝 기록을 조회합니다.")
-    @PostMapping("/read")
-    public ApiResponse<List<RunningActivityResponseDto>> readAll(@AuthenticationPrincipal(expression = "userId") Long userId) {
+    @Operation(summary = "모든 기간 러닝 기록 리스트 조회", description = "모든 기간의 러닝 기록을 조회합니다.")
+    @PostMapping("/readAll")
+    public ApiResponse<RunningActivityListResponseDto> readAll(@AuthenticationPrincipal(expression = "userId") Long userId) {
         return ApiResponse.success(runningActivityService.readAll(userId));
     }
 }
