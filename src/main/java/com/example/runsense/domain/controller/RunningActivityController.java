@@ -3,6 +3,7 @@ package com.example.runsense.domain.controller;
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityDetailResponseDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
 import com.example.runsense.domain.service.RunningActivityService;
 import com.example.runsense.global.response.ApiResponse;
@@ -39,5 +40,11 @@ public class RunningActivityController {
     @PostMapping("/readAll")
     public ApiResponse<RunningActivityListResponseDto> readAll(@AuthenticationPrincipal(expression = "userId") Long userId) {
         return ApiResponse.success(runningActivityService.readAll(userId));
+    }
+
+    @Operation(summary = "특정 기간 내 러닝 기록 리스트 조회", description = "시작 날짜와 종료 날짜 사이의 러닝 기록을 조회합니다.<br>주간 기록 조회와 월간 기록 조회 시 사용합니다.")
+    @PostMapping("/readDate")
+    public ApiResponse<RunningActivityListResponseDto> readDate(@AuthenticationPrincipal(expression = "userId") Long userId, @Valid @RequestBody RunningActivityRequestDto requestDto) {
+        return ApiResponse.success(runningActivityService.readDate(userId, requestDto));
     }
 }

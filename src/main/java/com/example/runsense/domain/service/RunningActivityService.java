@@ -2,8 +2,9 @@ package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityDetailResponseDto;
-import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
 import com.example.runsense.domain.dto.running_activity.sub.*;
 import com.example.runsense.domain.entity.AiCoaching;
 import com.example.runsense.domain.entity.FootSensorData;
@@ -21,6 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -131,6 +135,52 @@ public class RunningActivityService {
 
         // 유저의 전체 러닝 기록 조회 및 DTO 변환
         List<RunningActivityResponseDto> activities = runningActivityRepository.findAllByUserUserIdOrderByActivityDateDesc(currentUserId)
+                .stream()
+                .map(this::toRunningActivityResponseDto)
+                .toList();
+
+        // 통계 데이터 계산
+        int totalCount = activities.size(); // 횟수
+
+        double totalDistance = activities.stream() // 총 거리
+                .mapToDouble(RunningActivityResponseDto::getDistance)
+                .sum();
+
+        double averageFormScore = activities.stream() // 평균 폼 점수
+                .mapToDouble(RunningActivityResponseDto::getFormScore)
+                .average()
+                .orElse(0.0); // 기록이 없을 경우 0.0 처리
+
+        // 소수점 첫째짜리까지 보이도록
+        totalDistance = Math.round(totalDistance * 10) / 10.0;
+        averageFormScore = Math.round(averageFormScore * 10) / 10.0;
+
+        return RunningActivityListResponseDto.builder()
+                .totalCount(totalCount)
+                .totalDistance(totalDistance)
+                .averageFormScore(averageFormScore)
+                .activities(activities)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public RunningActivityListResponseDto readDate(Long currentUserId, RunningActivityRequestDto requestDto) {
+        // 유저 존재 여부 검증
+        userRepository.findById(currentUserId).orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+
+        // 날짜가 비어있거나 유효하지 않을 경우(시작 날짜가 종료 날짜보다 이후)
+        if (requestDto.getStartDate() == null || requestDto.getEndDate() == null || requestDto.getStartDate().isAfter(requestDto.getEndDate())) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        LocalDateTime startDateTime = requestDto.getStartDate().atStartOfDay();
+        LocalDateTime endDateTime = requestDto.getEndDate().atTime(LocalTime.MAX);
+
+        // 유저의 전체 러닝 기록 조회 및 DTO 변환
+        List<RunningActivityResponseDto> activities = runningActivityRepository.findAllByUserUserIdAndActivityDateBetweenOrderByActivityDateDesc(
+                        currentUserId,
+                        startDateTime,
+                        endDateTime)
                 .stream()
                 .map(this::toRunningActivityResponseDto)
                 .toList();
