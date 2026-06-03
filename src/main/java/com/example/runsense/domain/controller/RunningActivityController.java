@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/run")
 public class RunningActivityController {
@@ -30,5 +32,11 @@ public class RunningActivityController {
     @PostMapping("/read/{activityId}")
     public ApiResponse<RunningActivityDetailResponseDto> read(@PathVariable Long activityId, @AuthenticationPrincipal(expression = "userId") Long userId) {
         return ApiResponse.success(runningActivityService.read(activityId, userId));
+    }
+
+    @Operation(summary = "러닝 기록 리스트 조회", description = "모든 기간의 러닝 기록을 조회합니다.")
+    @PostMapping("/read")
+    public ApiResponse<List<RunningActivityResponseDto>> readAll(@AuthenticationPrincipal(expression = "userId") Long userId) {
+        return ApiResponse.success(runningActivityService.readAll(userId));
     }
 }

@@ -121,6 +121,35 @@ public class RunningActivityService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public List<RunningActivityResponseDto> readAll(Long currentUserId) {
+        userRepository.findById(currentUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+
+        return runningActivityRepository.findAllByUserUserIdOrderByActivityDateDesc(currentUserId)
+                .stream()
+                .map(this::toRunningActivityResponseDto)
+                .toList();
+    }
+
+    private RunningActivityResponseDto toRunningActivityResponseDto(RunningActivity runningActivity) {
+        int lapSplitCount = lapSplitRepository.findAllByRunningActivityActivityIdOrderBySplitIdAsc(runningActivity.getActivityId()).size();
+        int footSensorDataCount = footSensorDataRepository.findAllByRunningActivityActivityIdOrderBySensorDataIdAsc(runningActivity.getActivityId()).size();
+        int aiCoachingCount = aiCoachingRepository.findAllByRunningActivityActivityIdOrderByCoachingIdAsc(runningActivity.getActivityId()).size();
+
+        return RunningActivityResponseDto.builder()
+                .activityId(runningActivity.getActivityId())
+                .distance(runningActivity.getDistance())
+                .time(runningActivity.getTime())
+                .pace(runningActivity.getPace())
+                .activityDate(runningActivity.getActivityDate())
+                .formScore(runningActivity.getFormScore())
+                .lapSplitCount(lapSplitCount)
+                .footSensorDataCount(footSensorDataCount)
+                .aiCoachingCount(aiCoachingCount)
+                .build();
+    }
+
     private LapSplit toLapSplit(RunningActivity runningActivity, LapSplitCreateRequestDto requestDto) {
         return LapSplit.builder()
                 .runningActivity(runningActivity)
