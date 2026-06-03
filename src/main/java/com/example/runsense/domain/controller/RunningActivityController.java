@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/running-activities")
+@RequestMapping("/api/run")
 public class RunningActivityController {
 
     private final RunningActivityService runningActivityService;
@@ -23,7 +23,7 @@ public class RunningActivityController {
     }
 
     @Operation(summary = "러닝 기록 생성", description = "러닝 기록, 구간 기록, 발 센서 데이터, AI 코칭 정보를 함께 저장합니다")
-    @PostMapping
+    @PostMapping("/save")
     public ApiResponse<RunningActivityResponseDto> create(@Valid @RequestBody RunningActivityCreateRequestDto requestDto, @AuthenticationPrincipal(expression = "userId") Long userId) {
         return ApiResponse.success(runningActivityService.create(requestDto, userId));
     }
