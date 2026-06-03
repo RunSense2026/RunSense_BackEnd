@@ -2,8 +2,9 @@ package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityDetailResponseDto;
-import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
 import com.example.runsense.domain.dto.running_activity.sub.*;
 import com.example.runsense.domain.entity.AiCoaching;
 import com.example.runsense.domain.entity.FootSensorData;
@@ -21,6 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -157,6 +161,27 @@ public class RunningActivityService {
                 .averageFormScore(averageFormScore)
                 .activities(activities)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RunningActivityResponseDto> readDate(Long currentUserId, RunningActivityRequestDto requestDto) {
+        userRepository.findById(currentUserId).orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+
+        // 날짜가 비어있거나 유효하지 않을 경우(시작 날짜가 종료 날짜보다 이후)
+        if (requestDto.getStartDate() == null || requestDto.getEndDate() == null || requestDto.getStartDate().isAfter(requestDto.getEndDate())) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        LocalDateTime startDateTime = requestDto.getStartDate().atStartOfDay();
+        LocalDateTime endDateTime = requestDto.getEndDate().atTime(LocalTime.MAX);
+
+        return runningActivityRepository.findAllByUserUserIdAndActivityDateBetweenOrderByActivityDateDesc(
+                        currentUserId,
+                        startDateTime,
+                        endDateTime)
+                .stream()
+                .map(this::toRunningActivityResponseDto)
+                .toList();
     }
 
     private RunningActivityResponseDto toRunningActivityResponseDto(RunningActivity runningActivity) {
