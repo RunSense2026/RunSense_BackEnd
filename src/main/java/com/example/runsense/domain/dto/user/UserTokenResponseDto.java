@@ -9,7 +9,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Schema(description = "인증 토큰 응답 DTO")
-public class AuthTokenResponseDto {
+public class UserTokenResponseDto {
 	@Schema(description = "토큰 타입", example = "Bearer")
 	private String tokenType;
 	
@@ -22,8 +22,8 @@ public class AuthTokenResponseDto {
 	@Schema(description = "액세스 토큰 만료 시간 (초 단위)", example = "3600")
 	private long expiresIn;
 
-	public static AuthTokenResponseDto of(String accessToken, String refreshToken, long expiresIn) {
-		return AuthTokenResponseDto.builder()
+	public static UserTokenResponseDto of(String accessToken, String refreshToken, long expiresIn) {
+		return UserTokenResponseDto.builder()
 				.tokenType("Bearer")
 				.accessToken(accessToken)
 				.refreshToken(refreshToken)

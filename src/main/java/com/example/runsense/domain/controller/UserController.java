@@ -56,8 +56,8 @@ public class UserController {
 	 */
 	@Operation(summary = "유저 로그인", description = "이메일과 비밀번호로 로그인합니다")
 	@PostMapping("/login")
-	public ApiResponse<AuthTokenResponseDto> login(@Valid @RequestBody UserLoginRequestDto requestDto) {
-		AuthTokenResponseDto responseDto = userService.login(requestDto);
+	public ApiResponse<UserLoginResponseDto> login(@Valid @RequestBody UserLoginRequestDto requestDto) {
+		UserLoginResponseDto responseDto = userService.login(requestDto);
 		return ApiResponse.success(responseDto);
 	}
 
@@ -68,8 +68,8 @@ public class UserController {
 	 */
 	@Operation(summary = "토큰 재발급", description = "refreshToken으로 accessToken과 refreshToken을 다시 발급합니다")
 	@PostMapping("/reissue")
-	public ApiResponse<AuthTokenResponseDto> reissue(@Valid @RequestBody TokenReissueRequestDto requestDto) {
-		AuthTokenResponseDto responseDto = userService.reissue(requestDto.getRefreshToken());
+	public ApiResponse<UserTokenResponseDto> reissue(@Valid @RequestBody TokenReissueRequestDto requestDto) {
+		UserTokenResponseDto responseDto = userService.reissue(requestDto.getRefreshToken());
 		return ApiResponse.success(responseDto);
 	}
 
