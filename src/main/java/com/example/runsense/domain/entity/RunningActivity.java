@@ -1,5 +1,7 @@
 package com.example.runsense.domain.entity;
 
+import com.example.runsense.global.exception.CustomException;
+import com.example.runsense.global.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -47,4 +49,12 @@ public class RunningActivity {
 
     @Column(name = "form_score")
     private Short formScore;
+
+    // RunningActivity.java 엔티티 클래스 내부
+
+    public void validateOwner(Long currentUserId) {
+        if (!this.user.getUserId().equals(currentUserId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+    }
 }
