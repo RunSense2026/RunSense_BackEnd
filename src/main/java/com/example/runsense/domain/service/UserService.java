@@ -1,7 +1,6 @@
 package com.example.runsense.domain.service;
 
-import com.example.runsense.domain.dto.user.AuthTokenResponseDto;
-import com.example.runsense.domain.dto.user.UserLoginRequestDto;
+import com.example.runsense.domain.dto.user.*;
 import com.example.runsense.domain.entity.RefreshToken;
 import com.example.runsense.domain.repository.RefreshTokenRepository;
 import com.example.runsense.global.exception.CustomException;
@@ -11,8 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.runsense.domain.dto.user.UserSignUpRequestDto;
-import com.example.runsense.domain.dto.user.UserSignUpResponseDto;
 import com.example.runsense.domain.entity.User;
 import com.example.runsense.domain.repository.UserRepository;
 
@@ -56,7 +53,7 @@ public class UserService {
 	}
 
 	@Transactional
-	public AuthTokenResponseDto login(UserLoginRequestDto requestDto) {
+	public UserLoginResponseDto login(UserLoginRequestDto requestDto) {
 		User user = userRepository.findByEmail(requestDto.getEmail())
 				.orElseThrow(() -> new CustomException(ErrorCode.INVALID_LOGIN_INFO));
 
@@ -72,11 +69,11 @@ public class UserService {
 		storedRefreshToken.issue(refreshToken, jwtTokenProvider.getRefreshTokenExpiresAt());
 		refreshTokenRepository.save(storedRefreshToken);
 
-		return AuthTokenResponseDto.of(accessToken, refreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
+		return UserLoginResponseDto.of(user.getUserId(), user.getUserName(), user.getEmail(), accessToken, refreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
 	}
 
 	@Transactional
-	public AuthTokenResponseDto reissue(String refreshTokenValue) {
+	public UserTokenResponseDto reissue(String refreshTokenValue) {
 		RefreshToken refreshToken = refreshTokenRepository.findByRefreshToken(refreshTokenValue)
 				.orElseThrow(() -> new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
@@ -96,7 +93,7 @@ public class UserService {
 		refreshToken.issue(newRefreshToken, jwtTokenProvider.getRefreshTokenExpiresAt());
 		refreshTokenRepository.save(refreshToken);
 
-		return AuthTokenResponseDto.of(newAccessToken, newRefreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
+		return UserTokenResponseDto.of(newAccessToken, newRefreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
 	}
 
 	@Transactional

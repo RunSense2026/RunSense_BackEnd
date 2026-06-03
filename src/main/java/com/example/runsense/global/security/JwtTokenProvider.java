@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -128,11 +129,17 @@ public class JwtTokenProvider {
 			throw new CustomException(ErrorCode.INVALID_TOKEN);
 		}
 
-		// 토큰에서 subject(이메일) 추출
-		String email = claims.getSubject();
+		Long userId = claims.get("userId", Long.class); // 토큰 클레임에서 userId 추출
+		String email = claims.getSubject(); // 토큰에서 subject(이메일) 추출
+
+		CustomUserDetails userDetails = new CustomUserDetails(userId, email);
+
 		// JwtAuthenticationFilter에서 Authentication 객체를 SecurityContext에 저장
-		// 이후 @AuthenticationPrincipal로 접근 시 email 값이 principal로 사용됨
-		return new UsernamePasswordAuthenticationToken(email, null, AuthorityUtils.NO_AUTHORITIES);
+		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		return authentication;
 	}
 
 	/**
