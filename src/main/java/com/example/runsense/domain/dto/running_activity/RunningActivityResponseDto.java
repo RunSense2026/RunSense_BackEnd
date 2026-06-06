@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 public class RunningActivityResponseDto {
 
     private Long activityId;
-    private Long userId;
     private Double distance;
     private String time;
     private String pace;

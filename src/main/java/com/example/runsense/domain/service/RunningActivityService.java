@@ -1,10 +1,9 @@
 package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
+import com.example.runsense.domain.dto.running_activity.RunningActivityDetailResponseDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
-import com.example.runsense.domain.dto.running_activity.sub.AiCoachingCreateRequestDto;
-import com.example.runsense.domain.dto.running_activity.sub.FootSensorDataCreateRequestDto;
-import com.example.runsense.domain.dto.running_activity.sub.LapSplitCreateRequestDto;
+import com.example.runsense.domain.dto.running_activity.sub.*;
 import com.example.runsense.domain.entity.AiCoaching;
 import com.example.runsense.domain.entity.FootSensorData;
 import com.example.runsense.domain.entity.LapSplit;
@@ -75,7 +74,6 @@ public class RunningActivityService {
 
         return RunningActivityResponseDto.builder()
                 .activityId(savedActivity.getActivityId())
-                .userId(user.getUserId())
                 .distance(savedActivity.getDistance())
                 .time(savedActivity.getTime())
                 .pace(savedActivity.getPace())
@@ -84,6 +82,42 @@ public class RunningActivityService {
                 .lapSplitCount(lapSplits.size())
                 .footSensorDataCount(footSensorDataList.size())
                 .aiCoachingCount(aiCoachings.size())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public RunningActivityDetailResponseDto read(Long activityId, Long currentUserId) { // 1. currentUserId 추가
+        RunningActivity runningActivity = runningActivityRepository.findById(activityId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RUNNING_ACTIVITY_NOT_FOUND));
+
+        // 본인 확인 검증
+        runningActivity.validateOwner(currentUserId);
+
+        List<LapSplitResponseDto> lapSplits = lapSplitRepository.findAllByRunningActivityActivityIdOrderBySplitIdAsc(activityId)
+                .stream()
+                .map(LapSplitResponseDto::from)
+                .toList();
+
+        List<FootSensorDataResponseDto> footSensorData = footSensorDataRepository.findAllByRunningActivityActivityIdOrderBySensorDataIdAsc(activityId)
+                .stream()
+                .map(FootSensorDataResponseDto::from)
+                .toList();
+
+        List<AiCoachingResponseDto> aiCoachings = aiCoachingRepository.findAllByRunningActivityActivityIdOrderByCoachingIdAsc(activityId)
+                .stream()
+                .map(AiCoachingResponseDto::from)
+                .toList();
+
+        return RunningActivityDetailResponseDto.builder()
+                .activityId(runningActivity.getActivityId())
+                .distance(runningActivity.getDistance())
+                .time(runningActivity.getTime())
+                .pace(runningActivity.getPace())
+                .activityDate(runningActivity.getActivityDate())
+                .formScore(runningActivity.getFormScore())
+                .lapSplits(lapSplits)
+                .footSensorData(footSensorData)
+                .aiCoachings(aiCoachings)
                 .build();
     }
 
