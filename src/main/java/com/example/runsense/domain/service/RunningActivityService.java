@@ -20,6 +20,7 @@ import com.example.runsense.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -53,7 +54,7 @@ public class RunningActivityService {
                 .distance(requestDto.getDistance())
                 .time(requestDto.getTime())
                 .pace(requestDto.getPace())
-                .activityDate(requestDto.getActivityDate())
+                .activityDate(LocalDateTime.now())
                 .formScore(requestDto.getFormScore())
                 .build();
         RunningActivity savedActivity = runningActivityRepository.save(runningActivity);

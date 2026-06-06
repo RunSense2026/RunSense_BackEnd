@@ -30,10 +30,6 @@ public class RunningActivityCreateRequestDto {
     @NotNull(message = "pace는 필수 입력 값입니다.")
     private String pace;
 
-    @Schema(description = "활동 날짜", example = "2026-05-23T19:12:37")
-    @NotNull(message = "activityDate는 필수 입력 값입니다.")
-    private LocalDateTime activityDate;
-
     @Schema(description = "폼 점수", example = "100")
     @NotNull(message = "formScore은 필수 입력 값입니다.")
     private Short formScore;
