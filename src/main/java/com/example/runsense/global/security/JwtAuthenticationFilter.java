@@ -63,22 +63,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
 		if (authorizationHeader != null && authorizationHeader.startsWith(BEARER_PREFIX)) {
 			try {
-				// "Bearer " 접두사 제거 후 JWT 토큰만 추출 
+				// "Bearer " 접두사 제거 후 JWT 토큰만 추출
 				String token = authorizationHeader.substring(BEARER_PREFIX.length());
 				// JWT 토큰 검증 후 Authentication 객체 생성 (이메일 기반)
-				UsernamePasswordAuthenticationToken authentication =
-						(UsernamePasswordAuthenticationToken) jwtTokenProvider.getAuthentication(token);
-				// 클라이언트의 IP 주소, User Agent 등 웹 요청 상세정보 추가
-				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-				// Spring Security Context에 인증 정보 저장 (이후 요청에서 @AuthenticationPrincipal로 접근 가능)
-				SecurityContextHolder.getContext().setAuthentication(authentication);
+                var auth = jwtTokenProvider.getAuthentication(token);
+
+                if (auth instanceof UsernamePasswordAuthenticationToken) {
+                    ((UsernamePasswordAuthenticationToken) auth).setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+                }
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
 			} catch (CustomException e) {
 				// 토큰 검증 실패 -> 에러 응답 후 필터 체인 중단 (다음 필터 실행 불가)
 				response.setStatus(e.getErrorCode().getStatus().value());
 				response.setContentType("application/json;charset=UTF-8");
-				response.getWriter().write(objectMapper.writeValueAsString(ApiResponse.fail(
-						e.getErrorCode().getStatus().value(),
-						e.getErrorCode().getMessage())));
+                String jsonResponse = objectMapper.writeValueAsString(ApiResponse.fail(e.getErrorCode().getMessage()));
+                response.getWriter().write(jsonResponse);
 				return; 
 			}
 		}

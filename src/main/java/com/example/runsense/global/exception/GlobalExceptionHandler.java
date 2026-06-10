@@ -23,10 +23,14 @@ public class GlobalExceptionHandler {
      * @return ApiResponse 이용한 에러 응답
      */
     @ExceptionHandler(CustomException.class)
-    public ApiResponse<Void> handleIllegalArgumentException(CustomException e) {
+    public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
         ErrorCode errorCode = e.getErrorCode();
-        //errorCode.getStatus()가 HttpStatus 객체이므로, .value()로 오류 코드 꺼내기
-        return ApiResponse.fail(errorCode.getStatus().value(), errorCode.getMessage());
+
+        // HTTP 상태 코드를 직접 지정하여 반환
+        return new ResponseEntity<>(
+                ApiResponse.fail(errorCode.getMessage()), // status 필드 제거된 fail 호출
+                errorCode.getStatus()
+        );
     }
 
     /**
@@ -36,21 +40,16 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<ApiResponse<Map<String, String>>> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException e) {
 
-        // 에러 난 필드 확인
         Map<String, String> errors = new HashMap<>();
         for (FieldError fieldError : e.getBindingResult().getFieldErrors()) {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
 
-        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE; // 앞서 만든 에러코드 사용
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
 
-        // ApiResponse.fail(상태코드, 메시지, 에러맵) 바인딩
-        ApiResponse<Map<String, String>> response = ApiResponse.fail(
-                errorCode.getStatus().value(), // 400
-                errorCode.getMessage(),        // "입력값이 올바르지 않습니다."
-                errors                         // { "email": "올바르지 않은 이메일 형식입니다." }
+        return new ResponseEntity<>(
+                ApiResponse.fail(errorCode.getMessage(), errors), // 메시지와 에러 상세만 전달
+                errorCode.getStatus() // 400 Bad Request가 자동으로 설정됨
         );
-
-        return new ResponseEntity<>(response, errorCode.getStatus());
     }
 }
