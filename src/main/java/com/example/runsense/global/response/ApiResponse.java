@@ -1,5 +1,6 @@
 package com.example.runsense.global.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -7,6 +8,7 @@ import lombok.Getter;
  * 모든 API 응답의 공통 형식 정의하는 클래스
  */
 @Getter
+@Schema
 @AllArgsConstructor
 public class ApiResponse<T> {
     private boolean success;

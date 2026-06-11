@@ -15,31 +15,33 @@ public class ErrorResponseOperationCustomizer implements OperationCustomizer {
     @Override
     public Operation customize(Operation operation, HandlerMethod handlerMethod) {
         // 공통 500 에러 추가
-        addResponse(operation, ErrorCode.INTERNAL_SERVER_ERROR);
+        addResponse(operation, new ApiResponse(), ErrorCode.INTERNAL_SERVER_ERROR);
 
         // 메서드에 정의된 에러 추가
         ApiErrorAnnotation annotation = handlerMethod.getMethodAnnotation(ApiErrorAnnotation.class);
         if (annotation != null) {
             for (ErrorCode errorCode : annotation.value()) {
-                addResponse(operation, errorCode);
+                addResponse(operation, new ApiResponse(),  errorCode);
             }
         }
         return operation;
     }
 
-    private void addResponse(Operation operation, ErrorCode errorCode) {
-        String exampleJson = String.format(
-                "{\"success\": false, \"message\": \"%s\", \"data\": null}",
-                errorCode.getMessage()
-        );
+    private void addResponse(Operation operation, ApiResponse operationResponse, ErrorCode errorCode) {
+        // 응답 예시 객체 생성
+        var failResponse = com.example.runsense.global.response.ApiResponse.fail(errorCode.getMessage());
 
-        ApiResponse apiResponse = new ApiResponse()
-                .description(errorCode.getMessage())
-                .content(new Content().addMediaType("application/json",
-                        new MediaType().schema(new Schema<>()
-                                .example(exampleJson))));
+        // 스웨거 미디어 타입 및 스키마 설정
+        MediaType mediaType = new MediaType().schema(new Schema<>().example(failResponse));
 
-        operation.getResponses().addApiResponse(String.valueOf(errorCode.getStatus().value()), apiResponse);
+        // 콘텐츠 구성
+        Content content = new Content().addMediaType("application/json", mediaType);
+
+        // 최종 ApiResponse 구성
+        operationResponse.description(errorCode.getMessage())
+                .content(content);;
+
+        operation.getResponses().addApiResponse(String.valueOf(errorCode.getStatus().value()), operationResponse);
     }
 
 }
