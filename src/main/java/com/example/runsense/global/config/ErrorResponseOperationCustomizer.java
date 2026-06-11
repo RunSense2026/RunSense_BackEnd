@@ -14,8 +14,11 @@ public class ErrorResponseOperationCustomizer implements OperationCustomizer {
 
     @Override
     public Operation customize(Operation operation, HandlerMethod handlerMethod) {
-        ApiErrorAnnotation annotation = handlerMethod.getMethodAnnotation(ApiErrorAnnotation.class);
+        // 공통 500 에러 추가
+        addResponse(operation, ErrorCode.INTERNAL_SERVER_ERROR);
 
+        // 메서드에 정의된 에러 추가
+        ApiErrorAnnotation annotation = handlerMethod.getMethodAnnotation(ApiErrorAnnotation.class);
         if (annotation != null) {
             for (ErrorCode errorCode : annotation.value()) {
                 addResponse(operation, errorCode);

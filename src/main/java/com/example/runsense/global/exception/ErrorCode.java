@@ -21,7 +21,10 @@ public enum ErrorCode {
     RUNNING_ACTIVITY_NOT_FOUND(HttpStatus.NOT_FOUND, "러닝 액티비티를 찾을 수 없습니다."),
 
     // 유효성 검증 실패
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다.");
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
+
+    // 기본 예외
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;
     private final String message;
