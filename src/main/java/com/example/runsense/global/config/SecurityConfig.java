@@ -86,8 +86,7 @@ public class SecurityConfig {
 		CustomException exception = new CustomException(errorCode);
 		response.setStatus(exception.getErrorCode().getStatus().value());
 		response.setContentType("application/json;charset=UTF-8");
-		response.getWriter().write(objectMapper.writeValueAsString(ApiResponse.fail(
-				exception.getErrorCode().getStatus().value(),
-				exception.getErrorCode().getMessage())));
+        String jsonResponse = objectMapper.writeValueAsString(ApiResponse.fail(errorCode.getMessage()));
+        response.getWriter().write(jsonResponse);
 	}
 }
