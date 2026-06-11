@@ -43,4 +43,13 @@ public class OpenApiConfig {
 				.components(new Components()
 						.addSecuritySchemes("BearerAuth", securityScheme));
 	}
+
+	/**
+	 * Swagger에 오류 응답을 보여주기 위함
+	 *
+	 */
+	@Bean
+	public ErrorResponseOperationCustomizer errorResponseOperationCustomizer() {
+		return new ErrorResponseOperationCustomizer();
+	}
 }
