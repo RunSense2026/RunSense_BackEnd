@@ -38,7 +38,4 @@ public class RunningActivityDetailResponseDto {
 
     @Schema(description = "발 센서 데이터 목록")
     private List<FootSensorDataResponseDto> footSensorData;
-
-    @Schema(description = "AI 코칭 목록")
-    private List<AiCoachingResponseDto> aiCoachings;
 }

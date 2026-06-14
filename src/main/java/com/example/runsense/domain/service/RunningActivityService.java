@@ -109,11 +109,6 @@ public class RunningActivityService {
                 .map(FootSensorDataResponseDto::from)
                 .toList();
 
-        List<AiCoachingResponseDto> aiCoachings = aiCoachingRepository.findAllByRunningActivityActivityIdOrderByCoachingIdAsc(activityId)
-                .stream()
-                .map(AiCoachingResponseDto::from)
-                .toList();
-
         return RunningActivityDetailResponseDto.builder()
                 .activityId(runningActivity.getActivityId())
                 .distance(runningActivity.getDistance())
@@ -123,7 +118,6 @@ public class RunningActivityService {
                 .formScore(runningActivity.getFormScore())
                 .lapSplits(lapSplits)
                 .footSensorData(footSensorData)
-                .aiCoachings(aiCoachings)
                 .build();
     }
 
