@@ -14,7 +14,14 @@ public interface RunningActivityRepository extends JpaRepository<RunningActivity
 	List<RunningActivity> findAllByUserUserIdOrderByActivityDateDesc(Long userId);
 	List<RunningActivity> findAllByUserUserIdAndActivityDateBetweenOrderByActivityDateDesc(Long userId, LocalDateTime startDateTime, LocalDateTime endDateTime);
 
-	@Query("SELECT new com.example.runsense.domain.dto.user.UserRunningStatisticsDto(SUM(ra.distance), COUNT(ra)) " +
+	// 전체 기간 통계용
+	@Query("SELECT new com.example.runsense.domain.dto.user.UserRunningStatisticsDto(SUM(ra.distance), COUNT(ra), AVG(ra.formScore)) " +
 			"FROM RunningActivity ra WHERE ra.user.userId = :userId")
-    UserRunningStatisticsDto findStatisticsByUserId(@Param("userId") Long userId);
+	UserRunningStatisticsDto findStatisticsByUserId(@Param("userId") Long userId);
+
+	// 특정 기간 통계용
+	@Query("SELECT new com.example.runsense.domain.dto.user.UserRunningStatisticsDto(SUM(ra.distance), COUNT(ra), AVG(ra.formScore)) " +
+			"FROM RunningActivity ra " +
+			"WHERE ra.user.userId = :userId AND ra.activityDate BETWEEN :start AND :end")
+	UserRunningStatisticsDto findStatisticsByUserIdAndDateBetween(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

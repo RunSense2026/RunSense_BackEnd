@@ -69,6 +69,7 @@ public class UserService {
 
 		UserRunningStatisticsDto stats = runningActivityRepository.findStatisticsByUserId(user.getUserId());
 
+		// DB 조회 결과가 null일 경우 대비
 		int totalCount = stats.getTotalCount() != null ? stats.getTotalCount().intValue() : 0;
 		double totalDistance = stats.getTotalDistance() != null ? stats.getTotalDistance() : 0.0;
 		totalDistance = Math.round(totalDistance * 10) / 10.0;
