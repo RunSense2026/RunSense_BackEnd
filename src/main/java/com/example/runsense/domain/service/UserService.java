@@ -2,7 +2,9 @@ package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.user.*;
 import com.example.runsense.domain.entity.RefreshToken;
+import com.example.runsense.domain.entity.RunningActivity;
 import com.example.runsense.domain.repository.RefreshTokenRepository;
+import com.example.runsense.domain.repository.RunningActivityRepository;
 import com.example.runsense.global.exception.CustomException;
 import com.example.runsense.global.exception.ErrorCode;
 import com.example.runsense.global.security.JwtTokenProvider;
@@ -13,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.runsense.domain.entity.User;
 import com.example.runsense.domain.repository.UserRepository;
 
+import java.util.List;
+
 @Service
 public class UserService {
 
@@ -20,12 +24,14 @@ public class UserService {
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtTokenProvider jwtTokenProvider;
+	private final RunningActivityRepository runningActivityRepository;
 
-	public UserService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+	public UserService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, RunningActivityRepository runningActivityRepository) {
 		this.userRepository = userRepository;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.jwtTokenProvider = jwtTokenProvider;
+		this.runningActivityRepository = runningActivityRepository;
 	}
 
 	public boolean isEmailDuplicated(String email) {
@@ -61,6 +67,12 @@ public class UserService {
 			throw new CustomException(ErrorCode.INVALID_LOGIN_INFO);
 		}
 
+		UserRunningStatisticsDto stats = runningActivityRepository.findStatisticsByUserId(user.getUserId());
+
+		int totalCount = stats.getTotalCount() != null ? stats.getTotalCount().intValue() : 0;
+		double totalDistance = stats.getTotalDistance() != null ? stats.getTotalDistance() : 0.0;
+		totalDistance = Math.round(totalDistance * 10) / 10.0;
+
 		String accessToken = jwtTokenProvider.createAccessToken(user);
 		String refreshToken = jwtTokenProvider.createRefreshToken(user);
 
@@ -69,7 +81,7 @@ public class UserService {
 		storedRefreshToken.issue(refreshToken, jwtTokenProvider.getRefreshTokenExpiresAt());
 		refreshTokenRepository.save(storedRefreshToken);
 
-		return UserLoginResponseDto.of(user.getUserId(), user.getUserName(), user.getEmail(), accessToken, refreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
+		return UserLoginResponseDto.of(user.getUserId(), user.getUserName(), user.getEmail(), user.getCreatedAt(), totalDistance, totalCount, accessToken, refreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
 	}
 
 	@Transactional
