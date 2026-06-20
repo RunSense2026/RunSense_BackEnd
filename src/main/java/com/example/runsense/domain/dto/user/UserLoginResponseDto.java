@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -19,6 +21,17 @@ public class UserLoginResponseDto {
 	@Schema(description = "이메일", example = "user@example.com")
 	private String email;
 
+	// === 추가된 필드들 ===
+	@Schema(description = "가입 날짜", example = "2026-06-20")
+	private LocalDate createdAt;
+
+	@Schema(description = "총 러닝 거리 (km)", example = "120.5")
+	private double totalDistance;
+
+	@Schema(description = "총 러닝 횟수", example = "24")
+	private int totalCount;
+	// ====================
+
 	@Schema(description = "토큰 타입", example = "Bearer")
 	private String tokenType;
 	
@@ -31,11 +44,14 @@ public class UserLoginResponseDto {
 	@Schema(description = "액세스 토큰 만료 시간 (초 단위)", example = "3600")
 	private long expiresIn;
 
-	public static UserLoginResponseDto of(Long userId, String userName, String email, String accessToken, String refreshToken, long expiresIn) {
+	public static UserLoginResponseDto of(Long userId, String userName, String email, LocalDate createdAt, double totalDistance, int totalCount, String accessToken, String refreshToken, long expiresIn) {
 		return UserLoginResponseDto.builder()
 				.userID(userId)
 				.userName(userName)
 				.email(email)
+				.createdAt(createdAt)
+				.totalDistance(totalDistance)
+				.totalCount(totalCount)
 				.tokenType("Bearer")
 				.accessToken(accessToken)
 				.refreshToken(refreshToken)

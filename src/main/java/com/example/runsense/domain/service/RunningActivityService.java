@@ -6,6 +6,7 @@ import com.example.runsense.domain.dto.running_activity.RunningActivityRequestDt
 import com.example.runsense.domain.dto.running_activity.RunningActivityResponseDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityListResponseDto;
 import com.example.runsense.domain.dto.running_activity.sub.*;
+import com.example.runsense.domain.dto.user.UserRunningStatisticsDto;
 import com.example.runsense.domain.entity.AiCoaching;
 import com.example.runsense.domain.entity.FootSensorData;
 import com.example.runsense.domain.entity.LapSplit;
@@ -134,20 +135,15 @@ public class RunningActivityService {
                 .toList();
 
         // 통계 데이터 계산
-        int totalCount = activities.size(); // 횟수
+        UserRunningStatisticsDto stats = runningActivityRepository.findStatisticsByUserId(currentUserId);
 
-        double totalDistance = activities.stream() // 총 거리
-                .mapToDouble(RunningActivityResponseDto::getDistance)
-                .sum();
-
-        double averageFormScore = activities.stream() // 평균 폼 점수
-                .mapToDouble(RunningActivityResponseDto::getFormScore)
-                .average()
-                .orElse(0.0); // 기록이 없을 경우 0.0 처리
+        // DB 조회 결과가 null일 경우 대비
+        int totalCount = stats.getTotalCount() != null ? stats.getTotalCount().intValue() : 0;
+        double totalDistance = stats.getTotalDistance() != null ? stats.getTotalDistance() : 0.0;
+        double averageFormScore = stats.getAverageFormScore() != null ? stats.getAverageFormScore() : 0.0;
 
         // 소수점 첫째짜리까지 보이도록
         totalDistance = Math.round(totalDistance * 10) / 10.0;
-        averageFormScore = Math.round(averageFormScore * 10) / 10.0;
 
         return RunningActivityListResponseDto.builder()
                 .totalCount(totalCount)
@@ -180,16 +176,13 @@ public class RunningActivityService {
                 .toList();
 
         // 통계 데이터 계산
-        int totalCount = activities.size(); // 횟수
+        // 특정 기간 통계 데이터 전용 쿼리 호출
+        UserRunningStatisticsDto stats = runningActivityRepository.findStatisticsByUserIdAndDateBetween(currentUserId, startDateTime, endDateTime);
 
-        double totalDistance = activities.stream() // 총 거리
-                .mapToDouble(RunningActivityResponseDto::getDistance)
-                .sum();
-
-        double averageFormScore = activities.stream() // 평균 폼 점수
-                .mapToDouble(RunningActivityResponseDto::getFormScore)
-                .average()
-                .orElse(0.0); // 기록이 없을 경우 0.0 처리
+        // DB 조회 결과가 null일 경우 대비
+        int totalCount = stats.getTotalCount() != null ? stats.getTotalCount().intValue() : 0;
+        double totalDistance = stats.getTotalDistance() != null ? stats.getTotalDistance() : 0.0;
+        double averageFormScore = stats.getAverageFormScore() != null ? stats.getAverageFormScore() : 0.0;
 
         // 소수점 첫째짜리까지 보이도록
         totalDistance = Math.round(totalDistance * 10) / 10.0;
