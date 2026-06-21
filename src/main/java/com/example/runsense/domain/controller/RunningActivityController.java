@@ -34,9 +34,16 @@ public class RunningActivityController {
 
     @Operation(summary = "러닝 기록 조회", description = "러닝 기록, 구간 기록, 발 센서 데이터, AI 코칭 정보를 함께 조회합니다.")
     @GetMapping("/{activityId}")
-    @ApiErrorAnnotation({ErrorCode.RUNNING_ACTIVITY_NOT_FOUND})
+    @ApiErrorAnnotation({ErrorCode.RUNNING_ACTIVITY_NOT_FOUND, ErrorCode.ACCESS_DENIED})
     public ApiResponse<RunningActivityDetailResponseDto> read(@PathVariable Long activityId, @AuthenticationPrincipal(expression = "userId") Long userId) {
         return ApiResponse.success(runningActivityService.read(activityId, userId));
+    }
+
+    @Operation(summary = "러닝 기록 삭제")
+    @DeleteMapping("/{activityId}")
+    @ApiErrorAnnotation({ErrorCode.RUNNING_ACTIVITY_NOT_FOUND, ErrorCode.ACCESS_DENIED})
+    public ApiResponse<Long> delete(@PathVariable Long activityId, @AuthenticationPrincipal(expression = "userId") Long userId) {
+        return ApiResponse.success(runningActivityService.delete(activityId, userId));
     }
 
     @Operation(summary = "모든 기간 러닝 기록 리스트 조회", description = "모든 기간의 러닝 기록을 조회합니다.")
