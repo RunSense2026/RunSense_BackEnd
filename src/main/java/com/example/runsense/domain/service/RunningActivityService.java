@@ -122,6 +122,19 @@ public class RunningActivityService {
                 .build();
     }
 
+    @Transactional
+    public Long delete(Long activityId, Long currentUserId){
+            RunningActivity runningActivity = runningActivityRepository.findById(activityId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.RUNNING_ACTIVITY_NOT_FOUND));
+
+            // 본인 확인
+            runningActivity.validateOwner(currentUserId);
+
+            runningActivityRepository.delete(runningActivity);
+
+            return activityId;
+    }
+
     @Transactional(readOnly = true)
     public RunningActivityListResponseDto readAll(Long currentUserId) { // 1. 반환 타입 변경
         // 유저 존재 여부 검증
