@@ -11,8 +11,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.sql.Date;
 import java.time.LocalDate;
+
+import com.example.runsense.domain.dto.user.UserUpdateRequestDto;
 
 @Entity
 @Getter
@@ -45,9 +46,30 @@ public class User {
 	@Column(name = "height")
 	private Double height;
 
+	@Column(name = "weight")
+	private Double weight;
+
 	@Column(name = "is_verified")
 	private Boolean isVerified;
 
 	@Column(name = "created_at")
 	private LocalDate createdAt;
+
+	public void updateProfile(UserUpdateRequestDto requestDto) {
+		if (requestDto.getUserName() != null) {
+			this.userName = requestDto.getUserName();
+		}
+		if (requestDto.getBirthDate() != null) {
+			this.birthDate = requestDto.getBirthDate();
+		}
+		if (requestDto.getGender() != null) {
+			this.gender = requestDto.getGender();
+		}
+		if (requestDto.getHeight() != null) {
+			this.height = requestDto.getHeight();
+		}
+		if (requestDto.getWeight() != null) {
+			this.weight = requestDto.getWeight();
+		}
+	}
 }

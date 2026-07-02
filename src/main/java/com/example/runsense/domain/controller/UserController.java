@@ -7,7 +7,9 @@ import com.example.runsense.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -79,6 +81,20 @@ public class UserController {
 	}
 
 	/**
+	 * 유저 정보 업데이트 API
+	 * @param userId 인증된 유저의 ID
+	 * @param requestDto 수정할 유저 정보가 담긴 DTO (전달되지 않은 필드는 수정하지 않음)
+	 * @return 수정된 유저 정보가 담긴 DTO 응답
+	 */
+	@Operation(summary = "유저 정보 업데이트", description = "수정할 유저 정보를 받아 해당 내용으로 업데이트 합니다. 값이 null인 필드는 수정하지 않습니다.")
+	@PatchMapping
+	@ApiErrorAnnotation({ErrorCode.USER_NOT_FOUND})
+	public ApiResponse<UserResponseDto> update(@AuthenticationPrincipal(expression = "userId") Long userId, @Valid @RequestBody UserUpdateRequestDto requestDto) {
+		UserResponseDto responseDto = userService.update(userId, requestDto);
+		return ApiResponse.success(responseDto);
+	}
+
+    /**
 	 * 로그아웃 API
 	 * @param requestDto 로그아웃할 refreshToken이 들어있는 DTO
 	 * @return 로그아웃 성공 응답
