@@ -39,7 +39,7 @@ public class RunningActivityController {
 
     @Operation(summary = "러닝 기록 생성", description = "러닝 기록, 구간 기록, 발 센서 데이터, AI 코칭 정보를 함께 저장합니다")
     @PostMapping
-    @ApiErrorAnnotation({ErrorCode.INVALID_INPUT_VALUE})
+    @ApiErrorAnnotation({ErrorCode.INVALID_INPUT_VALUE, ErrorCode.AI_SERVICE_ERROR})
     public ApiResponse<RunningActivityResponseDto> create(@Valid @RequestBody RunningActivityCreateRequestDto requestDto, @AuthenticationPrincipal(expression = "userId") Long userId) {
         return ApiResponse.success(runningActivityService.create(requestDto, userId));
     }
