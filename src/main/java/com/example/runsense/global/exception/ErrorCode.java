@@ -23,6 +23,9 @@ public enum ErrorCode {
     // 유효성 검증 실패
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
 
+    // AI 코칭
+    AI_SERVICE_ERROR(HttpStatus.BAD_GATEWAY, "AI 서버와 통신 중 오류가 발생했습니다."),
+
     // 기본 예외
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
 
