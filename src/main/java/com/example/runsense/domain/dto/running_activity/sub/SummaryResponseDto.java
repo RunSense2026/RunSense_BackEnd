@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @Builder
 @Schema(description = "AI 코칭 요약 리포트 응답 DTO")
-public class AiCoachingSummaryResponseDto {
+public class SummaryResponseDto {
 
     @Schema(description = "요약 제목", example = "오늘의 분석")
     private String summaryTitle;
@@ -20,14 +20,14 @@ public class AiCoachingSummaryResponseDto {
     private Integer totalCoachingCount;
 
     @Schema(description = "요약 항목 목록")
-    private List<AiCoachingSummaryItemResponseDto> items;
+    private List<SummaryItemDto> items;
 
-    public static AiCoachingSummaryResponseDto from(ReportResponseDto reportResponseDto) {
-        List<AiCoachingSummaryItemResponseDto> items = reportResponseDto.getItems().stream()
-                .map(AiCoachingSummaryItemResponseDto::from)
+    public static SummaryResponseDto from(ReportResponseDto reportResponseDto) {
+        List<SummaryItemDto> items = reportResponseDto.getItems().stream()
+                .map(SummaryItemDto::from)
                 .toList();
 
-        return AiCoachingSummaryResponseDto.builder()
+        return SummaryResponseDto.builder()
                 .summaryTitle(reportResponseDto.getSummaryTitle())
                 .totalCoachingCount(reportResponseDto.getTotalCoachingCount())
                 .items(items)

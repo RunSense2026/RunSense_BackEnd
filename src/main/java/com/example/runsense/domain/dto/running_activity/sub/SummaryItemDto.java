@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @Schema(description = "AI 코칭 요약 항목 응답 DTO")
-public class AiCoachingSummaryItemResponseDto {
+public class SummaryItemDto {
 
     @Schema(description = "항목 제목", example = "왼발 하중 편중 개선")
     private String title;
@@ -22,8 +22,8 @@ public class AiCoachingSummaryItemResponseDto {
     @Schema(description = "해당 항목 발생 횟수", example = "2")
     private Integer count;
 
-    public static AiCoachingSummaryItemResponseDto from(ReportItemDto reportItem) {
-        return AiCoachingSummaryItemResponseDto.builder()
+    public static SummaryItemDto from(ReportItemDto reportItem) {
+        return SummaryItemDto.builder()
                 .title(reportItem.getTitle())
                 .description(reportItem.getDescription())
                 .recExercise(reportItem.getRecExercise())
