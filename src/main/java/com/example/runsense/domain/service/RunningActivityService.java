@@ -1,5 +1,9 @@
 package com.example.runsense.domain.service;
 
+import com.example.runsense.domain.dto.ai.ReportRequestDto;
+import com.example.runsense.domain.dto.ai.ReportResponseDto;
+import com.example.runsense.domain.dto.ai.sub.CoachingLogDto;
+import com.example.runsense.domain.dto.ai.sub.ReportItemDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityCreateRequestDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityDetailResponseDto;
 import com.example.runsense.domain.dto.running_activity.RunningActivityRequestDto;
@@ -22,7 +26,6 @@ import com.example.runsense.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -36,17 +39,20 @@ public class RunningActivityService {
     private final FootSensorDataRepository footSensorDataRepository;
     private final AiCoachingRepository aiCoachingRepository;
     private final UserRepository userRepository;
+    private final AiService aiService;
 
     public RunningActivityService(RunningActivityRepository runningActivityRepository,
                                   LapSplitRepository lapSplitRepository,
                                   FootSensorDataRepository footSensorDataRepository,
                                   AiCoachingRepository aiCoachingRepository,
-                                  UserRepository userRepository) {
+                                  UserRepository userRepository,
+                                  AiService aiService) {
         this.runningActivityRepository = runningActivityRepository;
         this.lapSplitRepository = lapSplitRepository;
         this.footSensorDataRepository = footSensorDataRepository;
         this.aiCoachingRepository = aiCoachingRepository;
         this.userRepository = userRepository;
+        this.aiService = aiService;
     }
 
     @Transactional
@@ -74,9 +80,13 @@ public class RunningActivityService {
                 .toList();
         footSensorDataRepository.saveAll(footSensorDataList);
 
-        List<AiCoaching> aiCoachings = requestDto.getAiCoachings().stream()
-                .map(aiCoachingRequest -> toAiCoaching(savedActivity, aiCoachingRequest))
-                .toList();
+        // 클라이언트가 보낸 원본 코칭 로그를 그대로 저장하지 않고, AI 요약 리포트로 정리한 결과를 저장한다.
+        ReportResponseDto reportSummary = generateReportSummary(requestDto.getAiCoachings());
+        List<AiCoaching> aiCoachings = reportSummary == null
+                ? List.of() // AI 미호출 시(코칭 로그 없음) 빈 리스트
+                : reportSummary.getItems().stream()
+                        .map(reportItem -> toAiCoaching(savedActivity, reportItem))
+                        .toList();
         aiCoachingRepository.saveAll(aiCoachings);
 
         return RunningActivityResponseDto.builder()
@@ -86,9 +96,7 @@ public class RunningActivityService {
                 .pace(savedActivity.getPace())
                 .activityDate(savedActivity.getActivityDate())
                 .formScore(savedActivity.getFormScore())
-                .lapSplitCount(lapSplits.size())
-                .footSensorDataCount(footSensorDataList.size())
-                .aiCoachingCount(aiCoachings.size())
+                .aiCoachingSummary(reportSummary == null ? null : SummaryResponseDto.from(reportSummary)) // AI 미호출 시에 null
                 .build();
     }
 
@@ -210,10 +218,6 @@ public class RunningActivityService {
     }
 
     private RunningActivityResponseDto toRunningActivityResponseDto(RunningActivity runningActivity) {
-        int lapSplitCount = lapSplitRepository.findAllByRunningActivityActivityIdOrderBySplitIdAsc(runningActivity.getActivityId()).size();
-        int footSensorDataCount = footSensorDataRepository.findAllByRunningActivityActivityIdOrderBySensorDataIdAsc(runningActivity.getActivityId()).size();
-        int aiCoachingCount = aiCoachingRepository.findAllByRunningActivityActivityIdOrderByCoachingIdAsc(runningActivity.getActivityId()).size();
-
         return RunningActivityResponseDto.builder()
                 .activityId(runningActivity.getActivityId())
                 .distance(runningActivity.getDistance())
@@ -221,9 +225,6 @@ public class RunningActivityService {
                 .pace(runningActivity.getPace())
                 .activityDate(runningActivity.getActivityDate())
                 .formScore(runningActivity.getFormScore())
-                .lapSplitCount(lapSplitCount)
-                .footSensorDataCount(footSensorDataCount)
-                .aiCoachingCount(aiCoachingCount)
                 .build();
     }
 
@@ -247,12 +248,37 @@ public class RunningActivityService {
                 .build();
     }
 
-    private AiCoaching toAiCoaching(RunningActivity runningActivity, AiCoachingCreateRequestDto requestDto) {
-        return AiCoaching.builder()
-                .runningActivity(runningActivity)
+    private ReportResponseDto generateReportSummary(List<AiCoachingCreateRequestDto> aiCoachingRequests) {
+        if (aiCoachingRequests.isEmpty()) {
+            return null; // 요약할 코칭 로그가 없으면 AI를 호출하지 않는다.
+        }
+
+        List<CoachingLogDto> coachingLogs = aiCoachingRequests.stream()
+                .map(this::toCoachingLogDto)
+                .toList();
+
+        ReportRequestDto reportRequestDto = ReportRequestDto.builder()
+                .coachingLogs(coachingLogs)
+                .build();
+
+        return aiService.createReport(reportRequestDto);
+    }
+
+    private CoachingLogDto toCoachingLogDto(AiCoachingCreateRequestDto requestDto) {
+        return CoachingLogDto.builder()
                 .feedbackText(requestDto.getFeedbackText())
                 .focusPoint(requestDto.getFocusPoint())
                 .recExercise(requestDto.getRecExercise())
+                .build();
+    }
+
+    // 리포트 항목(title/description)을 AiCoaching 필드(focusPoint/feedbackText)로 매핑. count는 저장하지 않음.
+    private AiCoaching toAiCoaching(RunningActivity runningActivity, ReportItemDto reportItem) {
+        return AiCoaching.builder()
+                .runningActivity(runningActivity)
+                .feedbackText(reportItem.getDescription())
+                .focusPoint(reportItem.getTitle())
+                .recExercise(reportItem.getRecExercise())
                 .build();
     }
 }
