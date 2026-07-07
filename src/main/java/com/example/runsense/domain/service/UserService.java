@@ -2,7 +2,6 @@ package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.user.*;
 import com.example.runsense.domain.entity.RefreshToken;
-import com.example.runsense.domain.entity.RunningActivity;
 import com.example.runsense.domain.repository.RefreshTokenRepository;
 import com.example.runsense.domain.repository.RunningActivityRepository;
 import com.example.runsense.global.exception.CustomException;
@@ -14,8 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.runsense.domain.entity.User;
 import com.example.runsense.domain.repository.UserRepository;
-
-import java.util.List;
 
 @Service
 public class UserService {
@@ -108,6 +105,14 @@ public class UserService {
 
 		return UserTokenResponseDto.of(newAccessToken, newRefreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
 	}
+
+    @Transactional
+    public UserResponseDto update(Long userId, UserUpdateRequestDto requestDto) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+		user.updateProfile(requestDto);
+
+        return UserResponseDto.from(user);
+    }
 
 	@Transactional
 	public void logout(String refreshTokenValue) {

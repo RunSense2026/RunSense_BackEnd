@@ -26,6 +26,8 @@ public class UserResponseDto {
 	private String gender;
 	@Schema(description = "키", example = "175.5")
 	private Double height;
+	@Schema(description = "체중", example = "70.0")
+	private Double weight;
 	@Schema(description = "이메일 인증 여부", example = "true")
 	private Boolean isVerified;
 	@Schema(description = "생성일")
@@ -40,6 +42,7 @@ public class UserResponseDto {
 				.birthDate(user.getBirthDate())
 				.gender(user.getGender())
 				.height(user.getHeight())
+				.weight(user.getWeight())
 				.isVerified(user.getIsVerified())
 				.createdAt(user.getCreatedAt())
 				.build();
