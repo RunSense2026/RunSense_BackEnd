@@ -2,6 +2,7 @@ package com.example.runsense.domain.dto.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -25,7 +26,8 @@ public class UserUpdateRequestDto {
     @Past(message = "생일은 과거 날짜여야 합니다.")
     private LocalDate birthDate;
 
-    @Schema(description = "성별", example = "남")
+    @Schema(description = "성별 (M, F, ETC 중 하나)", example = "M")
+    @Pattern(regexp = "^(M|F|ETC)$", message = "성별은 M, F, ETC 중 하나여야 합니다.")
     private String gender;
 
     @Schema(description = "신장", example = "170.0")
