@@ -32,3 +32,7 @@ app:
     refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION}
   ai:
     api-url: ${AI_API_URL}
+  public-api:
+    kma-url: ${KMA_API_URL}
+    air-korea-url: ${AIR_KOREA_API_URL}
+    service-key: ${PUBLIC_API_KEY}
