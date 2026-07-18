@@ -1,5 +1,6 @@
 package com.example.runsense.domain.controller;
 
+import com.example.runsense.domain.dto.publicdata.AirQualityResponseDto;
 import com.example.runsense.domain.dto.publicdata.WeatherResponseDto;
 import com.example.runsense.domain.service.PublicDataService;
 import com.example.runsense.global.exception.ApiErrorAnnotation;
@@ -32,5 +33,15 @@ public class PublicDataController {
             @Parameter(description = "경도", example = "126.9780") @RequestParam double lon
     ) {
         return ApiResponse.success(publicDataService.getWeather(lat, lon));
+    }
+
+    @Operation(summary = "대기질 조회", description = "위경도 기준으로 최근접 측정소의 에어코리아 실시간 측정정보를 조회합니다.")
+    @GetMapping("/air-quality")
+    @ApiErrorAnnotation({ErrorCode.PUBLIC_API_ERROR})
+    public ApiResponse<AirQualityResponseDto> getAirQuality(
+            @Parameter(description = "위도", example = "37.5665") @RequestParam double lat,
+            @Parameter(description = "경도", example = "126.9780") @RequestParam double lon
+    ) {
+        return ApiResponse.success(publicDataService.getAirQuality(lat, lon));
     }
 }

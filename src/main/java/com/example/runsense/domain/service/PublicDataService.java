@@ -1,8 +1,13 @@
 package com.example.runsense.domain.service;
 
+import com.example.runsense.domain.dto.publicdata.AirQualityResponseDto;
 import com.example.runsense.domain.dto.publicdata.WeatherResponseDto;
+import com.example.runsense.domain.dto.publicdata.raw.AirKoreaAirQualityApiResponse;
+import com.example.runsense.domain.dto.publicdata.raw.AirKoreaNearbyStationApiResponse;
+import com.example.runsense.domain.dto.publicdata.raw.AirQualityItemDto;
 import com.example.runsense.domain.dto.publicdata.raw.KmaWeatherApiResponse;
 import com.example.runsense.domain.dto.publicdata.raw.KmaWeatherItemDto;
+import com.example.runsense.domain.dto.publicdata.raw.NearbyStationItemDto;
 import com.example.runsense.global.exception.CustomException;
 import com.example.runsense.global.exception.ErrorCode;
 import com.example.runsense.global.util.CoordinateConverter;
@@ -12,6 +17,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -23,14 +30,20 @@ public class PublicDataService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final String kmaApiUrl;
+    private final String airKoreaApiUrl;
+    // 근접측정소 조회는 대기질(ArpltnInforInqireSvc)이 아닌 측정소정보(MsrstnInfoInqireSvc) 서비스 경로를 쓴다.
+    private final String msrstnApiUrl;
     private final String serviceKey;
     private final RestClient restClient;
 
     public PublicDataService(
             @Value("${app.public-api.kma-url}") String kmaApiUrl,
+            @Value("${app.public-api.air-korea-url}") String airKoreaApiUrl,
             @Value("${app.public-api.service-key}") String serviceKey
     ) {
         this.kmaApiUrl = kmaApiUrl;
+        this.airKoreaApiUrl = airKoreaApiUrl;
+        this.msrstnApiUrl = airKoreaApiUrl.replace("ArpltnInforInqireSvc", "MsrstnInfoInqireSvc");
         this.serviceKey = serviceKey;
         this.restClient = RestClient.create();
     }
@@ -100,6 +113,81 @@ public class PublicDataService {
         }
     }
 
+    // 위경도 → TM 좌표 변환 후, 최근접 측정소를 찾아 그 측정소의 실시간 측정정보를 반환한다.
+    public AirQualityResponseDto getAirQuality(double lat, double lon) {
+        CoordinateConverter.TmCoordinate tm = CoordinateConverter.toTm(lat, lon);
+
+        String stationName = fetchNearestStationName(tm.tmX(), tm.tmY());
+        if (stationName == null) throw new CustomException(ErrorCode.PUBLIC_API_ERROR);
+
+        AirQualityItemDto item = fetchAirQualityItem(stationName);
+        if (item == null) throw new CustomException(ErrorCode.PUBLIC_API_ERROR);
+
+        return AirQualityResponseDto.builder()
+                .stationName(stationName)
+                .dataTime(item.getDataTime())
+                .pm10Value(parseDoubleOrNull(item.getPm10Value()))
+                .pm25Value(parseDoubleOrNull(item.getPm25Value()))
+                .khaiValue(parseDoubleOrNull(item.getKhaiValue()))
+                .pm10Grade(item.getPm10Grade())
+                .pm25Grade(item.getPm25Grade())
+                .khaiGrade(item.getKhaiGrade())
+                .build();
+    }
+
+    // 좌표 기반 최근접 대기질 측정소 조회. 자치구명을 그대로 측정소명으로 쓰면 매칭이 안 되는 지역(예: 고양시 덕양구)이 있어
+    // TM 좌표로 가장 가까운 실제 측정소명을 찾아 다음 호출(getMsrstnAcctoRltmMesureDnsty)에 사용한다.
+    private String fetchNearestStationName(double tmX, double tmY) {
+        String url = msrstnApiUrl + "/getNearbyMsrstnList"
+                + "?serviceKey=" + serviceKey
+                + "&returnType=json&numOfRows=10&pageNo=1"
+                + "&tmX=" + tmX + "&tmY=" + tmY + "&ver=1.1";
+
+        try {
+            AirKoreaNearbyStationApiResponse res = restClient.get()
+                    .uri(URI.create(url))
+                    .retrieve()
+                    .body(AirKoreaNearbyStationApiResponse.class);
+
+            List<NearbyStationItemDto> items = (res != null && res.getResponse() != null && res.getResponse().getBody() != null)
+                    ? res.getResponse().getBody().getItems()
+                    : null;
+            if (items == null || items.isEmpty()) return null;
+
+            // API가 거리 오름차순으로 주지만, 안전하게 tm(거리) 최소값을 고른다.
+            return items.stream()
+                    .min(Comparator.comparingDouble(item -> parseDoubleOrMax(item.getTm())))
+                    .map(NearbyStationItemDto::getStationName)
+                    .filter(name -> name != null && !name.isBlank())
+                    .orElse(null);
+        } catch (RestClientException e) {
+            throw new CustomException(ErrorCode.PUBLIC_API_ERROR);
+        }
+    }
+
+    // 측정소명으로 실시간 측정정보(PM10/PM2.5/통합대기환경지수)를 조회한다.
+    private AirQualityItemDto fetchAirQualityItem(String stationName) {
+        String url = airKoreaApiUrl + "/getMsrstnAcctoRltmMesureDnsty"
+                + "?serviceKey=" + serviceKey
+                + "&returnType=json&numOfRows=1&pageNo=1"
+                + "&stationName=" + URLEncoder.encode(stationName, StandardCharsets.UTF_8)
+                + "&dataTerm=DAILY";
+
+        try {
+            AirKoreaAirQualityApiResponse res = restClient.get()
+                    .uri(URI.create(url))
+                    .retrieve()
+                    .body(AirKoreaAirQualityApiResponse.class);
+
+            List<AirQualityItemDto> items = (res != null && res.getResponse() != null && res.getResponse().getBody() != null)
+                    ? res.getResponse().getBody().getItems()
+                    : null;
+            return (items != null && !items.isEmpty()) ? items.get(0) : null;
+        } catch (RestClientException e) {
+            throw new CustomException(ErrorCode.PUBLIC_API_ERROR);
+        }
+    }
+
     // URI.create(url)로 이미 완성된 문자열을 그대로 사용한다.
     // RestClient의 .uri(String) 템플릿 방식은 내부적으로 다시 퍼센트 인코딩을 하기 때문에,
     // 공공데이터포털 발급 serviceKey(이미 인코딩된 값)를 넘기면 이중 인코딩되어 인증 오류가 난다.
@@ -124,13 +212,7 @@ public class PublicDataService {
 
     // 실황 item 목록에서 category 값을 찾아 숫자로 변환한다 (예: T1H, REH, WSD).
     private Double findDoubleValue(List<KmaWeatherItemDto> items, String category) {
-        String raw = findRawValue(items, category);
-        if (raw == null) return null;
-        try {
-            return Double.parseDouble(raw);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        return parseDoubleOrNull(findRawValue(items, category));
     }
 
     // 실황 item 목록에서 category 값을 문자열 그대로 찾는다 (예: PTY 코드).
@@ -142,13 +224,32 @@ public class PublicDataService {
                 .orElse(null);
     }
 
-    // fcstTime 정렬용 헬퍼. 값이 없거나 숫자가 아니면 정렬 순서상 맨 뒤로 밀어낸다.
+    // 값이 없거나 숫자가 아니면 null.
+    private Double parseDoubleOrNull(String value) {
+        if (value == null) return null;
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    // fcstTime/tm(거리) 정렬용 헬퍼. 값이 없거나 숫자가 아니면 정렬 순서상 맨 뒤로 밀어낸다.
     private int parseIntOrMax(String value) {
         if (value == null) return Integer.MAX_VALUE;
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return Integer.MAX_VALUE;
+        }
+    }
+
+    private double parseDoubleOrMax(String value) {
+        if (value == null) return Double.MAX_VALUE;
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return Double.MAX_VALUE;
         }
     }
 }
