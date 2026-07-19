@@ -1,6 +1,7 @@
 package com.example.runsense.domain.controller;
 
 import com.example.runsense.domain.dto.publicdata.AirQualityResponseDto;
+import com.example.runsense.domain.dto.publicdata.LocationResponseDto;
 import com.example.runsense.domain.dto.publicdata.WeatherResponseDto;
 import com.example.runsense.domain.service.PublicDataService;
 import com.example.runsense.global.exception.ApiErrorAnnotation;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/public")
-@Tag(name = "public-data", description = "공공데이터(날씨/대기질) 엔드포인트")
+@Tag(name = "public-data", description = "공공데이터(날씨/대기질/위치) 엔드포인트")
 public class PublicDataController {
 
     private final PublicDataService publicDataService;
@@ -43,5 +44,15 @@ public class PublicDataController {
             @Parameter(description = "경도", example = "126.9780") @RequestParam double lon
     ) {
         return ApiResponse.success(publicDataService.getAirQuality(lat, lon));
+    }
+
+    @Operation(summary = "위치 역지오코딩", description = "위경도 기준으로 화면 표시용 지역명을 조회합니다 (OpenStreetMap Nominatim).")
+    @GetMapping("/location")
+    @ApiErrorAnnotation({ErrorCode.PUBLIC_API_ERROR})
+    public ApiResponse<LocationResponseDto> getLocation(
+            @Parameter(description = "위도", example = "37.5665") @RequestParam double lat,
+            @Parameter(description = "경도", example = "126.9780") @RequestParam double lon
+    ) {
+        return ApiResponse.success(publicDataService.getLocation(lat, lon));
     }
 }

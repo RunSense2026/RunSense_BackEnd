@@ -1,6 +1,7 @@
 package com.example.runsense.domain.service;
 
 import com.example.runsense.domain.dto.publicdata.AirQualityResponseDto;
+import com.example.runsense.domain.dto.publicdata.LocationResponseDto;
 import com.example.runsense.domain.dto.publicdata.WeatherResponseDto;
 import com.example.runsense.domain.dto.publicdata.raw.AirKoreaAirQualityApiResponse;
 import com.example.runsense.domain.dto.publicdata.raw.AirKoreaNearbyStationApiResponse;
@@ -8,10 +9,13 @@ import com.example.runsense.domain.dto.publicdata.raw.AirQualityItemDto;
 import com.example.runsense.domain.dto.publicdata.raw.KmaWeatherApiResponse;
 import com.example.runsense.domain.dto.publicdata.raw.KmaWeatherItemDto;
 import com.example.runsense.domain.dto.publicdata.raw.NearbyStationItemDto;
+import com.example.runsense.domain.dto.publicdata.raw.NominatimReverseGeocodeResponse;
 import com.example.runsense.global.exception.CustomException;
 import com.example.runsense.global.exception.ErrorCode;
 import com.example.runsense.global.util.CoordinateConverter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -21,13 +25,22 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class PublicDataService {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+    private static final String NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
+    // Nominatim 사용정책상 식별 가능한 User-Agent가 필요하다.
+    private static final String NOMINATIM_USER_AGENT = "RunSense/1.0 (running app)";
+    // 시/도명 뒤에 붙는 행정구역 접미사 — 표시용 지역명에서 제거한다 (예: "서울특별시" → "서울").
+    private static final Pattern ADMIN_SUFFIX = Pattern.compile("(특별자치시|특별자치도|특별시|광역시)$");
 
     private final String kmaApiUrl;
     private final String airKoreaApiUrl;
@@ -35,6 +48,7 @@ public class PublicDataService {
     private final String msrstnApiUrl;
     private final String serviceKey;
     private final RestClient restClient;
+    private final RestClient nominatimRestClient;
 
     public PublicDataService(
             @Value("${app.public-api.kma-url}") String kmaApiUrl,
@@ -46,6 +60,14 @@ public class PublicDataService {
         this.msrstnApiUrl = airKoreaApiUrl.replace("ArpltnInforInqireSvc", "MsrstnInfoInqireSvc");
         this.serviceKey = serviceKey;
         this.restClient = RestClient.create();
+
+        // Nominatim은 응답이 느릴 수 있어 8초 타임아웃을 둔다.
+        SimpleClientHttpRequestFactory nominatimRequestFactory = new SimpleClientHttpRequestFactory();
+        nominatimRequestFactory.setConnectTimeout(8000);
+        nominatimRequestFactory.setReadTimeout(8000);
+        this.nominatimRestClient = RestClient.builder()
+                .requestFactory(nominatimRequestFactory)
+                .build();
     }
 
     // 위경도 → 기상청 격자 변환 후, 초단기실황(기온/습도/풍속/강수형태)과 초단기예보(하늘상태)를 조합해 반환한다.
@@ -186,6 +208,76 @@ public class PublicDataService {
         } catch (RestClientException e) {
             throw new CustomException(ErrorCode.PUBLIC_API_ERROR);
         }
+    }
+
+    // 위경도 → 한국 행정구역명 역지오코딩 (OpenStreetMap Nominatim, 키 불필요).
+    public LocationResponseDto getLocation(double lat, double lon) {
+        String url = NOMINATIM_URL
+                + "?format=jsonv2&lat=" + lat + "&lon=" + lon
+                + "&accept-language=ko&zoom=14";
+
+        NominatimReverseGeocodeResponse res;
+        try {
+            res = nominatimRestClient.get()
+                    .uri(URI.create(url))
+                    .header(HttpHeaders.USER_AGENT, NOMINATIM_USER_AGENT)
+                    .retrieve()
+                    .body(NominatimReverseGeocodeResponse.class);
+        } catch (RestClientException e) {
+            throw new CustomException(ErrorCode.PUBLIC_API_ERROR);
+        }
+
+        NominatimReverseGeocodeResponse.Address address = (res != null) ? res.getAddress() : null;
+        if (address == null) throw new CustomException(ErrorCode.PUBLIC_API_ERROR);
+
+        // 자치구/시군구명 — 대기질 측정소명 폴백으로도 쓰인다.
+        String gu = firstNonBlank(address.getCityDistrict(), address.getBorough(), address.getCounty(),
+                address.getCity(), address.getTown());
+        gu = (gu != null) ? gu.replaceAll("\\s", "") : "";
+
+        // 시/도명 — 접미사(특별시/광역시 등)를 제거한 표시용 형태.
+        String si = stripAdminSuffix(firstNonBlank(address.getCity(), address.getProvince(),
+                address.getState(), address.getRegion()));
+
+        String name = joinWithDot(si, gu);
+        if (name.isBlank()) {
+            String fromDisplayName = firstDisplayNameSegment(res.getDisplayName());
+            name = (fromDisplayName != null && !fromDisplayName.isBlank()) ? fromDisplayName : "현재 위치";
+        }
+
+        return LocationResponseDto.builder()
+                .name(name)
+                .gu(gu)
+                .build();
+    }
+
+    // 시/도명 뒤의 행정구역 접미사를 제거한다. 제거 후 빈 문자열이 되면 원본을 그대로 쓴다.
+    private String stripAdminSuffix(String value) {
+        String s = (value != null) ? value : "";
+        String stripped = ADMIN_SUFFIX.matcher(s).replaceAll("").trim();
+        return stripped.isEmpty() ? s : stripped;
+    }
+
+    // 표시용 지역명 조합: 비어있지 않은 값들을 " · "로 이어붙인다 (예: "서울 · 강남구").
+    private String joinWithDot(String... parts) {
+        return Arrays.stream(parts)
+                .filter(p -> p != null && !p.isBlank())
+                .collect(Collectors.joining(" · "));
+    }
+
+    // display_name의 첫 구획(대개 가장 상세한 지명)을 뽑는다. 지역명 조합이 비었을 때의 최종 폴백용.
+    private String firstDisplayNameSegment(String displayName) {
+        if (displayName == null) return null;
+        String[] parts = displayName.split(",");
+        return parts.length > 0 ? parts[0].trim() : null;
+    }
+
+    // 여러 후보 중 비어있지 않은 첫 값을 반환한다.
+    private String firstNonBlank(String... values) {
+        for (String v : values) {
+            if (v != null && !v.isBlank()) return v;
+        }
+        return null;
     }
 
     // URI.create(url)로 이미 완성된 문자열을 그대로 사용한다.
