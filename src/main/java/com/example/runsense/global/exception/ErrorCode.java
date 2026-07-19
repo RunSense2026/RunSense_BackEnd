@@ -29,6 +29,9 @@ public enum ErrorCode {
     // AI 코칭
     AI_SERVICE_ERROR(HttpStatus.BAD_GATEWAY, "AI 서버와 통신 중 오류가 발생했습니다."),
 
+    // 공공데이터(기상청/에어코리아/역지오코딩)
+    PUBLIC_API_ERROR(HttpStatus.BAD_GATEWAY, "공공데이터 API와 통신 중 오류가 발생했습니다."),
+
     // 기본 예외
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
 
