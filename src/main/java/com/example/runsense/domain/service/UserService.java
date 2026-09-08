@@ -106,6 +106,13 @@ public class UserService {
 		return UserTokenResponseDto.of(newAccessToken, newRefreshToken, jwtTokenProvider.getAccessTokenExpiresInSeconds());
 	}
 
+    @Transactional(readOnly = true)
+    public UserResponseDto getMyProfile(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return UserResponseDto.from(user);
+    }
+
     @Transactional
     public UserResponseDto update(Long userId, UserUpdateRequestDto requestDto) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));

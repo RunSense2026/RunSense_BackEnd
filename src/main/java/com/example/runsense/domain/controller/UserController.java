@@ -81,6 +81,19 @@ public class UserController {
 	}
 
 	/**
+	 * 내 프로필 조회 API
+	 * @param userId 인증된 유저의 ID
+	 * @return 현재 유저 정보가 담긴 DTO 응답
+	 */
+	@Operation(summary = "내 프로필 조회", description = "인증된 유저 본인의 프로필 정보를 조회합니다")
+	@GetMapping
+	@ApiErrorAnnotation({ErrorCode.USER_NOT_FOUND})
+	public ApiResponse<UserResponseDto> getMyProfile(@AuthenticationPrincipal(expression = "userId") Long userId) {
+		UserResponseDto responseDto = userService.getMyProfile(userId);
+		return ApiResponse.success(responseDto);
+	}
+
+	/**
 	 * 유저 정보 업데이트 API
 	 * @param userId 인증된 유저의 ID
 	 * @param requestDto 수정할 유저 정보가 담긴 DTO (전달되지 않은 필드는 수정하지 않음)
