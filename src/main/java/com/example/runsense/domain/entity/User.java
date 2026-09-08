@@ -49,6 +49,12 @@ public class User {
 	@Column(name = "weight")
 	private Double weight;
 
+    @Column(name = "resting_heart_rate")
+    private Double restingHeartRate;
+
+    @Column(name = "lthr")
+    private Integer lthr;
+
 	@Column(name = "is_verified")
 	private Boolean isVerified;
 

@@ -1,9 +1,12 @@
 package com.example.runsense.domain.service;
 
+import com.example.runsense.domain.dto.ai.AiCoachingRequestDto;
 import com.example.runsense.domain.dto.ai.CoachingRequestDto;
 import com.example.runsense.domain.dto.ai.CoachingResponseDto;
 import com.example.runsense.domain.dto.ai.ReportRequestDto;
 import com.example.runsense.domain.dto.ai.ReportResponseDto;
+import com.example.runsense.domain.dto.ai.sub.ProfileDto;
+import com.example.runsense.domain.entity.User;
 import com.example.runsense.domain.repository.UserRepository;
 import com.example.runsense.global.exception.CustomException;
 import com.example.runsense.global.exception.ErrorCode;
@@ -11,6 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+
+import java.time.LocalDate;
+import java.time.Period;
 
 @Service
 public class AiService {
@@ -26,10 +32,33 @@ public class AiService {
     }
 
     public CoachingResponseDto create(CoachingRequestDto requestDto, Long userId){
-        userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
 
-        return post(COACHING_PATH, requestDto, CoachingResponseDto.class);
+        AiCoachingRequestDto aiRequestDto = AiCoachingRequestDto.builder()
+                .pace(requestDto.getPace())
+                .heartRate(requestDto.getHeartRate())
+                .cadence(requestDto.getCadence())
+                .leftFoot(requestDto.getLeftFoot())
+                .rightFoot(requestDto.getRightFoot())
+                .profile(toProfileDto(user))
+                .build();
+
+        return post(COACHING_PATH, aiRequestDto, CoachingResponseDto.class);
+    }
+
+    private ProfileDto toProfileDto(User user) {
+        Integer age = user.getBirthDate() == null
+                ? null
+                : Period.between(user.getBirthDate(), LocalDate.now()).getYears();
+
+        return ProfileDto.builder()
+                .age(age)
+                .height(user.getHeight())
+                .weight(user.getWeight())
+                .restingHeartRate(user.getRestingHeartRate())
+                .lthr(user.getLthr())
+                .build();
     }
 
     // 별도 API로 노출되지 않고 RunningActivityService.create() 내부에서만 호출됨.
