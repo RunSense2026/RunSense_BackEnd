@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Builder
 @Getter
 @AllArgsConstructor
-@Schema(description = "회원가입 성공 응답 DTO")
+@Schema(description = "회원 정보 응답 DTO")
 public class UserResponseDto {
 
 	@Schema(description = "회원 ID", example = "1")
@@ -28,6 +28,10 @@ public class UserResponseDto {
 	private Double height;
 	@Schema(description = "체중", example = "70.0")
 	private Double weight;
+	@Schema(description = "안정시 심박수", example = "58.0")
+	private Double restingHeartRate;
+	@Schema(description = "젖산역치 심박수(LTHR)", example = "162")
+	private Integer lthr;
 	@Schema(description = "이메일 인증 여부", example = "true")
 	private Boolean isVerified;
 	@Schema(description = "생성일")
@@ -43,6 +47,8 @@ public class UserResponseDto {
 				.gender(user.getGender())
 				.height(user.getHeight())
 				.weight(user.getWeight())
+				.restingHeartRate(user.getRestingHeartRate())
+				.lthr(user.getLthr())
 				.isVerified(user.getIsVerified())
 				.createdAt(user.getCreatedAt())
 				.build();

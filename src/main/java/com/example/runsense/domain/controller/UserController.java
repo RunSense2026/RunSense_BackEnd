@@ -36,7 +36,7 @@ public class UserController {
 	 */
 	@Operation(summary = "유저 회원가입", description="유저가 요청한 정보로 회원가입을 진행합니다")
 	@PostMapping("/signup")
-	@ApiErrorAnnotation({ErrorCode.DUPLICATE_EMAIL})
+	@ApiErrorAnnotation({ErrorCode.DUPLICATE_EMAIL, ErrorCode.INVALID_INPUT_VALUE})
 	public ApiResponse<UserSignUpResponseDto> signUp(@Valid @RequestBody UserSignUpRequestDto requestDto) {
 		UserSignUpResponseDto responseDto = userService.signUp(requestDto);
 		return ApiResponse.success(responseDto);
@@ -81,6 +81,19 @@ public class UserController {
 	}
 
 	/**
+	 * 내 프로필 조회 API
+	 * @param userId 인증된 유저의 ID
+	 * @return 현재 유저 정보가 담긴 DTO 응답
+	 */
+	@Operation(summary = "내 프로필 조회", description = "인증된 유저 본인의 프로필 정보를 조회합니다")
+	@GetMapping
+	@ApiErrorAnnotation({ErrorCode.USER_NOT_FOUND})
+	public ApiResponse<UserResponseDto> getMyProfile(@AuthenticationPrincipal(expression = "userId") Long userId) {
+		UserResponseDto responseDto = userService.getMyProfile(userId);
+		return ApiResponse.success(responseDto);
+	}
+
+	/**
 	 * 유저 정보 업데이트 API
 	 * @param userId 인증된 유저의 ID
 	 * @param requestDto 수정할 유저 정보가 담긴 DTO (전달되지 않은 필드는 수정하지 않음)
@@ -88,7 +101,7 @@ public class UserController {
 	 */
 	@Operation(summary = "유저 정보 업데이트", description = "수정할 유저 정보를 받아 해당 내용으로 업데이트 합니다. 값이 null인 필드는 수정하지 않습니다.")
 	@PatchMapping
-	@ApiErrorAnnotation({ErrorCode.USER_NOT_FOUND})
+	@ApiErrorAnnotation({ErrorCode.USER_NOT_FOUND, ErrorCode.INVALID_INPUT_VALUE})
 	public ApiResponse<UserResponseDto> update(@AuthenticationPrincipal(expression = "userId") Long userId, @Valid @RequestBody UserUpdateRequestDto requestDto) {
 		UserResponseDto responseDto = userService.update(userId, requestDto);
 		return ApiResponse.success(responseDto);
