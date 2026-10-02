@@ -1,10 +1,15 @@
 package com.example.runsense.global.config;
 
+import com.example.runsense.global.response.ApiErrorResponse;
+import io.swagger.v3.core.converter.AnnotatedType;
+import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.converter.ResolvedSchema;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -51,5 +56,22 @@ public class OpenApiConfig {
 	@Bean
 	public ErrorResponseOperationCustomizer errorResponseOperationCustomizer() {
 		return new ErrorResponseOperationCustomizer();
+	}
+
+	/**
+	 * ErrorResponseOperationCustomizer가 모든 에러 응답에서 $ref로 참조하는
+	 * 공통 에러 스키마("ApiErrorResponse")를 components.schemas에 등록한다.
+	 * 이게 없으면 각 에러 응답이 이름 없는 익명 스키마로 중복 생성되어,
+	 * 프론트 OpenAPI 코드젠이 S_2, S_16 같은 의미 없는 placeholder 타입을 만들어낸다.
+	 */
+	@Bean
+	public GlobalOpenApiCustomizer errorSchemaOpenApiCustomizer() {
+		return openApi -> {
+			ResolvedSchema resolvedSchema = ModelConverters.getInstance()
+					.resolveAsResolvedSchema(new AnnotatedType(ApiErrorResponse.class));
+
+			openApi.getComponents().addSchemas(ErrorResponseOperationCustomizer.ERROR_SCHEMA_NAME, resolvedSchema.schema);
+			resolvedSchema.referencedSchemas.forEach(openApi.getComponents()::addSchemas);
+		};
 	}
 }

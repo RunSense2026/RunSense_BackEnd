@@ -12,6 +12,13 @@ import org.springframework.web.method.HandlerMethod;
 
 public class ErrorResponseOperationCustomizer implements OperationCustomizer {
 
+    /**
+     * 모든 에러 응답이 공유하는 참조용 스키마 이름.
+     * {@link OpenApiConfig}에서 이 이름으로 실제 스키마를 components에 등록한다.
+     */
+    public static final String ERROR_SCHEMA_NAME = "ApiErrorResponse";
+    private static final String ERROR_SCHEMA_REF = "#/components/schemas/" + ERROR_SCHEMA_NAME;
+
     @Override
     public Operation customize(Operation operation, HandlerMethod handlerMethod) {
         // 공통 500 에러 추가
@@ -31,8 +38,11 @@ public class ErrorResponseOperationCustomizer implements OperationCustomizer {
         // 응답 예시 객체 생성
         var failResponse = com.example.runsense.global.response.ApiResponse.fail(errorCode.getMessage());
 
-        // 스웨거 미디어 타입 및 스키마 설정
-        MediaType mediaType = new MediaType().schema(new Schema<>().example(failResponse));
+        // 스웨거 미디어 타입 구성: 이름 없는 익명 스키마 대신 공통 에러 스키마를 참조(ref)하고,
+        // 예시 값은 schema가 아닌 example 필드에 별도로 붙인다 ($ref와 example을 같은 레벨에 둬도 유효함)
+        MediaType mediaType = new MediaType()
+                .schema(new Schema<>().$ref(ERROR_SCHEMA_REF))
+                .example(failResponse);
 
         // 콘텐츠 구성
         Content content = new Content().addMediaType("application/json", mediaType);
