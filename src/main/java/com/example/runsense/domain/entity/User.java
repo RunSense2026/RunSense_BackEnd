@@ -77,11 +77,11 @@ public class User {
 		if (requestDto.getWeight() != null) {
 			this.weight = requestDto.getWeight();
 		}
-		if (requestDto.getRestingHeartRate() != null) {
-			this.restingHeartRate = requestDto.getRestingHeartRate();
-		}
-		if (requestDto.getLthr() != null) {
-			this.lthr = requestDto.getLthr();
-		}
+	}
+
+	// LTHR 테스트 결과를 현재 LTHR·안정시 심박수로 반영 (유저 정보 수정으로는 바꿀 수 없다)
+	public void updateHeartRateProfile(Integer lthr, Double restingHeartRate) {
+		this.lthr = lthr;
+		this.restingHeartRate = restingHeartRate;
 	}
 }
