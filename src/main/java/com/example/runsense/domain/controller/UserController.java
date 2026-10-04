@@ -99,7 +99,7 @@ public class UserController {
 	 * @param requestDto 수정할 유저 정보가 담긴 DTO (전달되지 않은 필드는 수정하지 않음)
 	 * @return 수정된 유저 정보가 담긴 DTO 응답
 	 */
-	@Operation(summary = "유저 정보 업데이트", description = "수정할 유저 정보를 받아 해당 내용으로 업데이트 합니다. 값이 null인 필드는 수정하지 않습니다.")
+	@Operation(summary = "유저 정보 업데이트", description = "수정할 유저 정보를 받아 해당 내용으로 업데이트 합니다. 값이 null인 필드는 수정하지 않습니다. 안정시 심박수·LTHR은 수정할 수 없으며 LTHR 테스트 결과(POST /api/lthr)로만 갱신됩니다.")
 	@PatchMapping
 	@ApiErrorAnnotation({ErrorCode.USER_NOT_FOUND, ErrorCode.INVALID_INPUT_VALUE})
 	public ApiResponse<UserResponseDto> update(@AuthenticationPrincipal(expression = "userId") Long userId, @Valid @RequestBody UserUpdateRequestDto requestDto) {

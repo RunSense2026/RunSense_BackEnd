@@ -13,6 +13,7 @@ import java.time.LocalDate;
 /**
  * 유저 정보 수정 요청 시 사용자로부터 전달받는 데이터를 담는 DTO
  * 전달되지 않은(null) 필드는 수정하지 않는다.
+ * 안정시 심박수·LTHR은 LTHR 테스트 결과(POST /api/lthr)로만 갱신되므로 여기서 받지 않는다.
  */
 @Getter
 @NoArgsConstructor
@@ -37,12 +38,4 @@ public class UserUpdateRequestDto {
     @Schema(description = "체중. null이면 기존 값 유지", example = "70.0")
     @Positive(message = "체중은 0보다 커야 합니다.")
     private Double weight;
-
-    @Schema(description = "안정시 심박수. null이면 기존 값 유지", example = "58.0")
-    @Positive(message = "안정시 심박수는 0보다 커야 합니다.")
-    private Double restingHeartRate;
-
-    @Schema(description = "젖산역치 심박수(LTHR). null이면 기존 값 유지", example = "162")
-    @Positive(message = "LTHR은 0보다 커야 합니다.")
-    private Integer lthr;
 }
