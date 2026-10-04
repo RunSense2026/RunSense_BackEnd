@@ -39,7 +39,7 @@ public class CourseController {
             @Parameter(description = "추천 개수 (1~10)", example = "3") @RequestParam(defaultValue = "3") int limit,
             @Parameter(description = "최소 공원면적(㎡). 0이면 면적 필터 없음 (면적 정보 없는 공원도 포함)", example = "10000")
             @RequestParam(defaultValue = "10000") double minArea,
-            @Parameter(description = "필수 시설 태그 — 모두 갖춘 공원만 반환 (시설 정보가 없는 공원이 많아 걸수록 후보가 크게 줄어듦)",
+            @Parameter(description = "필수 시설 태그 — 모두 갖춘 공원만 반환 (시설 정보가 없는 공원이 많아 걸수록 후보가 크게 줄어듦). 미지정(null)이면 시설 필터 없음",
                     array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {
                             "산책로", "운동기구", "구기장", "화장실", "음수대", "주차장", "휴식공간", "CCTV"})))
             @RequestParam(required = false) List<String> tags
