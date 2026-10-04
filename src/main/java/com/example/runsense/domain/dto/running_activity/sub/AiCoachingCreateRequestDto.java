@@ -9,12 +9,12 @@ import lombok.NoArgsConstructor;
 @Schema(description = "AI 코칭 요약 요청 DTO")
 public class AiCoachingCreateRequestDto {
 
-    @Schema(description = "피드백 내용", example = "호흡을 가다듬고 페이스를 조금 낮춰보세요.")
+    @Schema(description = "피드백 내용. null이면 AI 요약 리포트 요청에 null로 전달", example = "호흡을 가다듬고 페이스를 조금 낮춰보세요.")
     private String feedbackText;
 
-    @Schema(description = "분석 중점", example = "호흡 안정과 페이스 조절")
+    @Schema(description = "분석 중점. null이면 AI 요약 리포트 요청에 null로 전달", example = "호흡 안정과 페이스 조절")
     private String focusPoint;
 
-    @Schema(description = "추천 운동", example = "가벼운 조깅과 호흡 조절 훈련")
+    @Schema(description = "추천 운동. null이면 AI 요약 리포트 요청에 null로 전달", example = "가벼운 조깅과 호흡 조절 훈련")
     private String recExercise;
 }

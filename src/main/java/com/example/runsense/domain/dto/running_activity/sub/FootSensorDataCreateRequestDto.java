@@ -9,15 +9,15 @@ import lombok.NoArgsConstructor;
 @Schema(description = "발 센서 데이터 요청 DTO")
 public class FootSensorDataCreateRequestDto {
 
-    @Schema(description = "발 방향", example = "Left")
+    @Schema(description = "발 방향. null이면 DB에 NULL로 저장", example = "Left")
     private String footSide;
 
-    @Schema(description = "회내유형", example = "과내선")
+    @Schema(description = "회내유형. null이면 DB에 NULL로 저장", example = "과내선")
     private String pronationType;
 
-    @Schema(description = "뒤꿈치 착지율", example = "99.0")
+    @Schema(description = "뒤꿈치 착지율. null이면 DB에 NULL로 저장", example = "99.0")
     private Double heelStrikeRate;
 
-    @Schema(description = "히트맵 데이터", example = "{}")
+    @Schema(description = "히트맵 데이터. null이면 DB에 NULL로 저장", example = "{}")
     private String hitmapJson;
 }

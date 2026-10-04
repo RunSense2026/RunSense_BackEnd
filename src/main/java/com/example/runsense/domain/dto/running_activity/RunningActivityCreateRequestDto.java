@@ -46,7 +46,7 @@ public class RunningActivityCreateRequestDto {
     @Size(min = 2, max = 2, message = "footSensorData는 정확히 2개여야 합니다.")
     private List<FootSensorDataCreateRequestDto> footSensorData;
 
-    @Schema(description = "러닝 액티비티에 포함된 aiCoachings 리스트", example = "[{\"feedbackText\":\"호흡을 가다듬고 페이스를 조금 낮춰보세요.\",\"focusPoint\":\"호흡 안정과 페이스 조절\",\"recExercise\":\"가벼운 조깅과 호흡 조절 훈련\"},{\"feedbackText\":\"마지막 구간에서 보폭이 줄었습니다.\",\"focusPoint\":\"후반 보폭 유지\",\"recExercise\":\"스트라이드 드릴과 하체 근지구력 훈련\"}]")
+    @Schema(description = "러닝 액티비티에 포함된 aiCoachings 리스트. 빈 리스트면 AI 요약을 호출하지 않고 응답의 aiCoachingSummary가 null", example = "[{\"feedbackText\":\"호흡을 가다듬고 페이스를 조금 낮춰보세요.\",\"focusPoint\":\"호흡 안정과 페이스 조절\",\"recExercise\":\"가벼운 조깅과 호흡 조절 훈련\"},{\"feedbackText\":\"마지막 구간에서 보폭이 줄었습니다.\",\"focusPoint\":\"후반 보폭 유지\",\"recExercise\":\"스트라이드 드릴과 하체 근지구력 훈련\"}]")
     @Valid
     @NotNull(message = "aiCoachings는 필수 입력 값입니다.")
     @Size(max = 3, message = "aiCoaching은 최대 3개까지 저장할 수 있습니다.")
