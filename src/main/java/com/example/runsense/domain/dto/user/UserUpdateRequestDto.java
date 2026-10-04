@@ -37,4 +37,12 @@ public class UserUpdateRequestDto {
     @Schema(description = "체중. null이면 기존 값 유지", example = "70.0")
     @Positive(message = "체중은 0보다 커야 합니다.")
     private Double weight;
+
+    @Schema(description = "안정시 심박수. null이면 기존 값 유지", example = "58.0")
+    @Positive(message = "안정시 심박수는 0보다 커야 합니다.")
+    private Double restingHeartRate;
+
+    @Schema(description = "젖산역치 심박수(LTHR). null이면 기존 값 유지", example = "162")
+    @Positive(message = "LTHR은 0보다 커야 합니다.")
+    private Integer lthr;
 }

@@ -77,5 +77,11 @@ public class User {
 		if (requestDto.getWeight() != null) {
 			this.weight = requestDto.getWeight();
 		}
+		if (requestDto.getRestingHeartRate() != null) {
+			this.restingHeartRate = requestDto.getRestingHeartRate();
+		}
+		if (requestDto.getLthr() != null) {
+			this.lthr = requestDto.getLthr();
+		}
 	}
 }
