@@ -9,6 +9,9 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
+    hikari:
+      # 기본 설정의 DEALLOCATE ALL 은 PostgreSQL 전용이라 H2 에서 문법 오류가 나므로 무해한 쿼리로 덮어씀
+      connection-init-sql: "SELECT 1"
 
   jpa:
     hibernate:
@@ -25,3 +28,10 @@ app:
     secret: testsecretkeytestsecretkeytestsecretkeytestsecretkeytestsecretkey
     access-token-expiration-ms: 3600000
     refresh-token-expiration-ms: 86400000
+  # .env 없이도 컨텍스트가 뜨도록 외부 API 주소도 가짜 값으로 채움 (테스트에서 실제 호출하지 않음)
+  ai:
+    api-url: http://localhost:8000
+  public-api:
+    kma-url: http://localhost/kma
+    air-korea-url: http://localhost/air-korea
+    service-key: test-service-key
