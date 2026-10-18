@@ -3,6 +3,7 @@ package com.example.runsense.global.exception;
 import com.example.runsense.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -65,6 +66,21 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(
                 ApiResponse.fail(errorCode.getMessage(), errors), // 메시지와 에러 상세만 전달
                 errorCode.getStatus() // 400 Bad Request가 자동으로 설정됨
+        );
+    }
+
+    /**
+     * 요청 본문을 읽을 수 없을 때(JSON 문법 오류, 필드 타입 불일치 등) 발생하는 예외 처리
+     * 예) Double 필드에 "--'--" 같은 문자열, Short 범위를 넘는 숫자
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+        log.warn("HttpMessageNotReadableException: {}", e.getMessage()); // 로그기록
+
+        return new ResponseEntity<>(
+                ApiResponse.fail(errorCode.getMessage()),
+                errorCode.getStatus()
         );
     }
 }

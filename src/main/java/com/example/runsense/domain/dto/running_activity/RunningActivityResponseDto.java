@@ -16,5 +16,5 @@ public class RunningActivityResponseDto {
     private String pace;
     private LocalDateTime activityDate;
     private Short formScore;
-    private SummaryResponseDto aiCoachingSummary; // 생성 시점에만 채워짐. 리포트가 저장되지 않으므로 조회 응답에서는 항상 null
+    private SummaryResponseDto aiCoachingSummary; // 생성 시점에만 채워짐. 조회 응답에서는 항상 null (저장된 항목은 상세 조회의 aiCoachings로 제공)
 }
