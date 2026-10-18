@@ -38,4 +38,7 @@ public class RunningActivityDetailResponseDto {
 
     @Schema(description = "발 센서 데이터 목록")
     private List<FootSensorDataResponseDto> footSensorData;
+
+    @Schema(description = "AI 코칭 요약 항목 목록. 저장 시 AI 요약 리포트 항목(title→focusPoint, description→feedbackText)으로 정리된 값이며, 코칭 없이 저장했으면 빈 리스트")
+    private List<AiCoachingResponseDto> aiCoachings;
 }

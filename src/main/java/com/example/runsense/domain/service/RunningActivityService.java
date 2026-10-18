@@ -118,6 +118,12 @@ public class RunningActivityService {
                 .map(FootSensorDataResponseDto::from)
                 .toList();
 
+        // 저장 시 AI 요약 리포트 항목으로 정리해 둔 코칭(focusPoint=title, feedbackText=description)
+        List<AiCoachingResponseDto> aiCoachings = aiCoachingRepository.findAllByRunningActivityActivityIdOrderByCoachingIdAsc(activityId)
+                .stream()
+                .map(AiCoachingResponseDto::from)
+                .toList();
+
         return RunningActivityDetailResponseDto.builder()
                 .activityId(runningActivity.getActivityId())
                 .distance(runningActivity.getDistance())
@@ -127,6 +133,7 @@ public class RunningActivityService {
                 .formScore(runningActivity.getFormScore())
                 .lapSplits(lapSplits)
                 .footSensorData(footSensorData)
+                .aiCoachings(aiCoachings)
                 .build();
     }
 
