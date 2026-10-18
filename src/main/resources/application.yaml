@@ -14,6 +14,10 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-init-sql: "DEALLOCATE ALL"
+      # Supabase 트랜잭션 풀러(6543)는 요청마다 다른 커넥션을 붙여 서버 측 prepared statement가 충돌한다
+      # ("S_1" already exists/does not exist → 500). DB_URL에 옵션이 빠져도 항상 꺼지도록 고정
+      data-source-properties:
+        prepareThreshold: 0
 
   jpa:
     hibernate:
